@@ -1,0 +1,11 @@
+@import 'node_modules/bootstrap/scss/bootstrap.scss';
+$fa-font-path:"/fonts";
+@import 'node_modules/font-awesome/scss/font-awesome.scss';
+@import 'src/ui/styles/animate.scss';
+
+/*  COMPONENTS  */
+@import 'src/ui/components/loader/loader.scss';
+@import 'src/ui/layouts/layout.scss';
+
+@import 'src/ui/pages/home/home.scss';
+@import 'src/ui/pages/stake-search/stake-search.scss';

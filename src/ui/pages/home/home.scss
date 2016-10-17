@@ -1,0 +1,16 @@
+html, body{
+  height: 100%;
+}
+
+.wmr-jumbotron{
+  background-color:#00FFB8;
+  margin-bottom: 0px;
+  .container {
+    max-width: 576px;
+  }
+}
+
+.nav-item.tray{
+  height: 24px;
+  width: 40px;
+}
