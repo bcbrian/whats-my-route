@@ -8,8 +8,11 @@ import App from '../../../src/ui/layouts/layout.js';
 import Home from '../../../src/ui/pages/home/home.js';
 import Search from '../../../src/ui/pages/stake-search/stake-search.js';
 import Stake from '../../../src/ui/pages/stake/stake.js';
+import Ward from '../../../src/ui/pages/ward/ward.js';
+import NewRoute from '../../../src/ui/pages/new-route/new-route.js';
+import ViewRoute from '../../../src/ui/pages/route/route.js';
 
-// const networkInterface = createNetworkInterface('https://whats-my-route-bcbrian.c9users.io');
+// const networkInterface = createNetworkInterface('//whats-my-route-bcbrian.c9users.io');
 // const client = new ApolloClient(networkInterface);
 const client = new ApolloClient();
 
@@ -17,11 +20,14 @@ const routes = (
   <Route path="/" component={App}>
     <IndexRoute component={Home}/>
     <Route path="/search/:searchString" component={Search}/>
-    <Route path="/stake/:stakeName" component={Stake}/>
+    <Route path="/stake/:stakeId" component={Stake}/>
+    <Route path="/stake/:stakeId/ward/:wardId" component={Ward}/>
+    <Route path="/stake/:stakeId/ward/:wardId/new-route" component={NewRoute}/>
+    <Route path="/stake/:stakeId/ward/:wardId/route/:routeId" component={ViewRoute}/>
   </Route>
 );
 
-if(typeof document !== "undefined"){
+if(typeof document !== "undefined" && typeof client !== "undefined" ){
   render((
     <ApolloProvider client={client}>
       <Router routes={routes} history={browserHistory}>

@@ -1,6 +1,9 @@
 import React, { Component, PropTypes } from 'react';
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 import { Link } from 'react-router';
+import Alert from 'react-s-alert';
+
+// import '/node-modules/react-s-alert/dist/s-alert-default.css';
 
 export default class App extends Component {
   constructor(props, context) {
@@ -44,6 +47,7 @@ export default class App extends Component {
   render() {
     return (
       <div>
+        <Alert stack={true} timeout={3000} />
         {this.renderHeader()}
         <ReactCSSTransitionGroup
           component="div"

@@ -1,37 +1,66 @@
 import React, { Component, PropTypes } from 'react';
+import { Link } from 'react-router';
 import { graphql } from 'react-apollo';
 import gql from 'graphql-tag';
-import _ from 'lodash';
 
 import Loader from '../../../../src/ui/components/loader/loader.js';
+import AddStake from '../../../../src/ui/components/addStake/addStake.js';
 
-export class StakesSearch extends Component {
-  constructor(props) {
-    super(props);
+class StakesSearch extends Component {
+  constructor(props, context) {
+    super(props, context);
   }
+  
+  renderListOfStakes(){
+    return(
+      <ul className="list-group">
+        {
+          this.props.stakes.map((stake) => {
+            return (
+              
+              <li key={stake._id} className="list-group-item">
+                <Link to={`/stake/${stake._id}`}>
+                  <span className="tag tag-default tag-pill pull-xs-right">{stake.wardCount}</span>
+                  {stake.name}
+                </Link>
+              </li>
+            );
+          })
+        }
+        
+      </ul>
+    );
+  }
+  
+  
   
   render() {
     return this.props.loading ? (<Loader />) : (
       <div>
         <div className="jumbotron jumbotron-fluid wmr-jumbotron">
           <div className="container">
-            <p className="text-xs-center">When searching for "{this.props.searchString}" this is what we found.</p>
+            {
+              this.props.stakes.length > 0 ?
+                <p className="text-xs-center">
+                  When searching for "{this.props.searchString}" this is what we found.
+                </p>
+              :
+                <p className="text-xs-center">
+                  We did not find a stake mathcing your search.
+                  <br />
+                  Click here to search again or add a new stake below.
+                </p>
+            }
           </div>
         </div>
+        <hr />
         <div className="container list">
-          <ul className="list-group">
-            {
-              this.props.stakes.map((stake) => {
-                return (
-                  <li className="list-group-item">
-                    <span className="tag tag-default tag-pill pull-xs-right">{stake.wardCount}</span>
-                    {stake.name}
-                  </li>
-                );
-              })
-            }
-            
-          </ul>
+          {
+            this.props.stakes.length > 0 ?
+            this.renderListOfStakes() :
+            <AddStake searchString={this.props.searchString} />
+          }
+          
         </div>
       </div>
     );
@@ -62,7 +91,6 @@ const qStakes = gql`
 const StakesSearchData = graphql(qStakes, {
 
   options(props) {
-    console.log('props.params: ', props.params)
     return {
       variables: {
         searchString: props.params.searchString,
