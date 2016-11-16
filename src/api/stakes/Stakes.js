@@ -1,6 +1,6 @@
 import Mongoose from 'mongoose';
 import shortid from 'shortid';
-const mongo = Mongoose.connect('mongodb://whatsmyroute:whatsmyroute@ds059316.mlab.com:59316/whatsmyroute');
+const mongo = Mongoose.connect(process.env.MONGO_URL);
 
 const StakeSchema = Mongoose.Schema({
    _id: {
