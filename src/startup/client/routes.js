@@ -3,6 +3,7 @@ import { render } from 'react-dom';
 import { Router, Route, browserHistory, IndexRoute } from 'react-router';
 import ApolloClient, { createNetworkInterface } from 'apollo-client';
 import { ApolloProvider } from 'react-apollo';
+import ReactGA from 'react-ga';
 
 import App from '../../../src/ui/layouts/layout.js';
 import Home from '../../../src/ui/pages/home/home.js';
@@ -15,6 +16,12 @@ import ViewRoute from '../../../src/ui/pages/route/route.js';
 // const networkInterface = createNetworkInterface('//whats-my-route-bcbrian.c9users.io');
 // const client = new ApolloClient(networkInterface);
 const client = new ApolloClient();
+
+ReactGA.initialize('UA-87715799-1');
+function logPageView() {
+  ReactGA.set({ page: window.location.pathname });
+  ReactGA.pageview(window.location.pathname);
+}
 
 const routes = (
   <Route path="/" component={App}>
@@ -30,9 +37,7 @@ const routes = (
 if(typeof document !== "undefined" && typeof client !== "undefined" ){
   render((
     <ApolloProvider client={client}>
-      <Router routes={routes} history={browserHistory}>
-        
-      </Router>
+      <Router routes={routes} history={browserHistory} onUpdate={logPageView} />
     </ApolloProvider>
   ), document.getElementById('app'));
 }
