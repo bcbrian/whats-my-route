@@ -94,7 +94,7 @@ app.get('*', (req, res) => {
       const client = new ApolloClient({
         ssrMode: false,
       });
-  
+
       const app = (
         <ApolloProvider client={client}>
           <RouterContext {...renderProps} />
@@ -114,22 +114,21 @@ function renderPage(appHtml) {
   return `
     <!doctype html public="storage">
     <html>
-    <!-- Begin Inspectlet Embed Code -->
-    <script type="text/javascript" id="inspectletjs">
-    window.__insp = window.__insp || [];
-    __insp.push(['wid', 2009312640]);
-    (function() {
-    function ldinsp(){if(typeof window.__inspld != "undefined") return; window.__inspld = 1; var insp = document.createElement('script'); insp.type = 'text/javascript'; insp.async = true; insp.id = "inspsync"; insp.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://cdn.inspectlet.com/inspectlet.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(insp, x); };
-    setTimeout(ldinsp, 500); document.readyState != "complete" ? (window.attachEvent ? window.attachEvent('onload', ldinsp) : window.addEventListener('load', ldinsp, false)) : ldinsp();
-    })();
+    <script type="text/javascript">
+    window.smartlook||(function(d) {
+    var o=smartlook=function(){ o.api.push(arguments)},h=d.getElementsByTagName('head')[0];
+    var c=d.createElement('script');o.api=new Array();c.async=true;c.type='text/javascript';
+    c.charset='utf-8';c.src='//rec.smartlook.com/recorder.js';h.appendChild(c);
+    })(document);
+    smartlook('init', 'e9e09dced1b2a56db642ce3641d40ccffdc8ef88');
     </script>
-    <!-- End Inspectlet Embed Code -->
     <meta charset=utf-8/>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <title>What's my route</title>
     <link rel=stylesheet href="/bundle.css">
     <div id="app">${appHtml}</div>
+    <script src="https://cdn.rawgit.com/alertifyjs/alertify.js/v1.0.10/dist/js/alertify.js"></script>
     <script src="/bundle.js"></script>
    `
 }

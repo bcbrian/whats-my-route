@@ -1,5 +1,6 @@
 import Mongoose from 'mongoose';
 import shortid from 'shortid';
+
 const mongo = Mongoose.connect(process.env.MONGO_URL);
 
 const StakeSchema = Mongoose.Schema({

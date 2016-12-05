@@ -7,6 +7,11 @@ import ReactGA from 'react-ga';
 
 import App from '../../../src/ui/layouts/layout.js';
 import Home from '../../../src/ui/pages/home/home.js';
+import {
+  About,
+  Contact,
+  Support,
+} from '../../../src/ui/pages/general/general.js';
 import Search from '../../../src/ui/pages/stake-search/stake-search.js';
 import Stake from '../../../src/ui/pages/stake/stake.js';
 import Ward from '../../../src/ui/pages/ward/ward.js';
@@ -17,7 +22,6 @@ import ViewRoute from '../../../src/ui/pages/route/route.js';
 // const client = new ApolloClient(networkInterface);
 const client = new ApolloClient();
 
-ReactGA.initialize('UA-87715799-1');
 function logPageView() {
   ReactGA.set({ page: window.location.pathname });
   ReactGA.pageview(window.location.pathname);
@@ -26,6 +30,9 @@ function logPageView() {
 const routes = (
   <Route path="/" component={App}>
     <IndexRoute component={Home}/>
+    <Route path="/about" component={About}/>
+    <Route path="/contact" component={Contact}/>
+    <Route path="/support" component={Support}/>
     <Route path="/search/:searchString" component={Search}/>
     <Route path="/stake/:stakeId" component={Stake}/>
     <Route path="/stake/:stakeId/ward/:wardId" component={Ward}/>
@@ -35,6 +42,7 @@ const routes = (
 );
 
 if(typeof document !== "undefined" && typeof client !== "undefined" ){
+  ReactGA.initialize('UA-87715799-1');
   render((
     <ApolloProvider client={client}>
       <Router routes={routes} history={browserHistory} onUpdate={logPageView} />

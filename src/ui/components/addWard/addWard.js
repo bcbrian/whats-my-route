@@ -2,33 +2,22 @@ import React, { Component, PropTypes } from 'react';
 import { Link } from 'react-router';
 import { graphql } from 'react-apollo';
 import gql from 'graphql-tag';
-import Alert from 'react-s-alert';
 
 class AddWard extends Component {
   constructor(props, context) {
     super(props, context);
-    
+
     this.addWard = this.addWard.bind(this);
   }
   addWard(){
     const stakeId = this.props.stakeId;
     const wardName = this.wardName.value;
-    // Alert.info(`The ward, ${wardName}, was added.`, {
-    //   position: 'top',
-    //   effect: 'scale',
-    //   onShow() {
-    //       console.log('aye!')
-    //   },
-    //   // beep: false,
-    //   // timeout: 5000,
-    //   // offset: 100,
-    // });
     this.props.submit({ stakeId, wardName }).then(({ data }) => {
-      console.log('got data', data);
+      alertify.logPosition('top right').success('Ward added');
       // this.context.router.push(`/stake/${data.submitWard._id}`);
       this.props.refetchStake();
       this.wardName.value = '';
-      
+
     }).catch((error) => {
       console.log('there was an error sending the query', error);
     });
@@ -83,4 +72,3 @@ const AddWardWithData = graphql(mAddWard, {
 })(AddWard);
 
 export default AddWardWithData;
-

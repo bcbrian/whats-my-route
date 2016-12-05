@@ -10,14 +10,14 @@ class StakesSearch extends Component {
   constructor(props, context) {
     super(props, context);
   }
-  
+
   renderListOfStakes(){
     return(
       <ul className="list-group">
         {
           this.props.stakes.map((stake) => {
             return (
-              
+
               <li key={stake._id} className="list-group-item">
                 <Link to={`/stake/${stake._id}`}>
                   <span className="tag tag-default tag-pill pull-xs-right">{stake.wardCount}</span>
@@ -27,13 +27,13 @@ class StakesSearch extends Component {
             );
           })
         }
-        
+
       </ul>
     );
   }
-  
-  
-  
+
+
+
   render() {
     return this.props.loading ? (<Loader />) : (
       <div>
@@ -60,7 +60,7 @@ class StakesSearch extends Component {
             this.renderListOfStakes() :
             <AddStake searchString={this.props.searchString} />
           }
-          
+
         </div>
       </div>
     );

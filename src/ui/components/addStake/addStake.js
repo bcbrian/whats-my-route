@@ -6,13 +6,14 @@ import gql from 'graphql-tag';
 class AddStake extends Component {
   constructor(props, context) {
     super(props, context);
-    
+
     this.addStake = this.addStake.bind(this);
   }
   addStake(){
     const stakeName = this.stakeName.value;
     const wardName = this.wardName.value;
     this.props.submit({ stakeName, wardName }).then(({ data }) => {
+      alertify.logPosition('top right').success('Stake and Ward added');
       this.context.router.push(`/stake/${data.submitStake._id}`);
     }).catch((error) => {
       console.log('there was an error sending the query', error);
@@ -72,4 +73,3 @@ const AddStakeWithData = graphql(mAddStake, {
 })(AddStake);
 
 export default AddStakeWithData;
-

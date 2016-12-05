@@ -85,9 +85,9 @@
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	// server.js
-	var express = __webpack_require__(34);
-	var path = __webpack_require__(35);
-	var compression = __webpack_require__(36);
+	var express = __webpack_require__(35);
+	var path = __webpack_require__(36);
+	var compression = __webpack_require__(37);
 	// we'll use this to render our app to an html string
 
 	// and these to match the url to routes and then render
@@ -175,7 +175,7 @@
 	});
 
 	function renderPage(appHtml) {
-	  return '\n    <!doctype html public="storage">\n    <html>\n    <meta charset=utf-8/>\n    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">\n    <meta http-equiv="x-ua-compatible" content="ie=edge">\n    <title>What\'s my route</title>\n    <link rel=stylesheet href="/bundle.css">\n    <div id="app">' + appHtml + '</div>\n    <script src="/bundle.js"></script>\n   ';
+	  return '\n    <!doctype html public="storage">\n    <html>\n    <script type="text/javascript">\n    window.smartlook||(function(d) {\n    var o=smartlook=function(){ o.api.push(arguments)},h=d.getElementsByTagName(\'head\')[0];\n    var c=d.createElement(\'script\');o.api=new Array();c.async=true;c.type=\'text/javascript\';\n    c.charset=\'utf-8\';c.src=\'//rec.smartlook.com/recorder.js\';h.appendChild(c);\n    })(document);\n    smartlook(\'init\', \'e9e09dced1b2a56db642ce3641d40ccffdc8ef88\');\n    </script>\n    <meta charset=utf-8/>\n    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">\n    <meta http-equiv="x-ua-compatible" content="ie=edge">\n    <title>What\'s my route</title>\n    <link rel=stylesheet href="/bundle.css">\n    <div id="app">' + appHtml + '</div>\n    <script src="https://cdn.rawgit.com/alertifyjs/alertify.js/v1.0.10/dist/js/alertify.js"></script>\n    <script src="/bundle.js"></script>\n   ';
 	}
 
 	var PORT = process.env.PORT || 8080;
@@ -594,7 +594,7 @@
 
 	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-	var mongo = _mongoose2.default.connect('mongodb://whatsmyroute:whatsmyroute@ds059316.mlab.com:59316/whatsmyroute');
+	var mongo = _mongoose2.default.connect(process.env.MONGO_URL);
 
 	var StakeSchema = _mongoose2.default.Schema({
 	  _id: {
@@ -688,7 +688,11 @@
 
 	var _reactApollo = __webpack_require__(9);
 
-	var _layout = __webpack_require__(20);
+	var _reactGa = __webpack_require__(20);
+
+	var _reactGa2 = _interopRequireDefault(_reactGa);
+
+	var _layout = __webpack_require__(21);
 
 	var _layout2 = _interopRequireDefault(_layout);
 
@@ -696,23 +700,25 @@
 
 	var _home2 = _interopRequireDefault(_home);
 
-	var _stakeSearch = __webpack_require__(24);
+	var _general = __webpack_require__(24);
+
+	var _stakeSearch = __webpack_require__(25);
 
 	var _stakeSearch2 = _interopRequireDefault(_stakeSearch);
 
-	var _stake = __webpack_require__(28);
+	var _stake = __webpack_require__(29);
 
 	var _stake2 = _interopRequireDefault(_stake);
 
-	var _ward = __webpack_require__(30);
+	var _ward = __webpack_require__(31);
 
 	var _ward2 = _interopRequireDefault(_ward);
 
-	var _newRoute = __webpack_require__(32);
+	var _newRoute = __webpack_require__(33);
 
 	var _newRoute2 = _interopRequireDefault(_newRoute);
 
-	var _route = __webpack_require__(33);
+	var _route = __webpack_require__(34);
 
 	var _route2 = _interopRequireDefault(_route);
 
@@ -722,10 +728,18 @@
 	// const client = new ApolloClient(networkInterface);
 	var client = new _apolloClient2.default();
 
+	function logPageView() {
+	  _reactGa2.default.set({ page: window.location.pathname });
+	  _reactGa2.default.pageview(window.location.pathname);
+	}
+
 	var routes = _react2.default.createElement(
 	  _reactRouter.Route,
 	  { path: '/', component: _layout2.default },
 	  _react2.default.createElement(_reactRouter.IndexRoute, { component: _home2.default }),
+	  _react2.default.createElement(_reactRouter.Route, { path: '/about', component: _general.About }),
+	  _react2.default.createElement(_reactRouter.Route, { path: '/contact', component: _general.Contact }),
+	  _react2.default.createElement(_reactRouter.Route, { path: '/support', component: _general.Support }),
 	  _react2.default.createElement(_reactRouter.Route, { path: '/search/:searchString', component: _stakeSearch2.default }),
 	  _react2.default.createElement(_reactRouter.Route, { path: '/stake/:stakeId', component: _stake2.default }),
 	  _react2.default.createElement(_reactRouter.Route, { path: '/stake/:stakeId/ward/:wardId', component: _ward2.default }),
@@ -734,10 +748,11 @@
 	);
 
 	if (typeof document !== "undefined" && typeof client !== "undefined") {
+	  _reactGa2.default.initialize('UA-87715799-1');
 	  (0, _reactDom.render)(_react2.default.createElement(
 	    _reactApollo.ApolloProvider,
 	    { client: client },
-	    _react2.default.createElement(_reactRouter.Router, { routes: routes, history: _reactRouter.browserHistory })
+	    _react2.default.createElement(_reactRouter.Router, { routes: routes, history: _reactRouter.browserHistory, onUpdate: logPageView })
 	  ), document.getElementById('app'));
 	}
 
@@ -751,6 +766,12 @@
 
 /***/ },
 /* 20 */
+/***/ function(module, exports) {
+
+	module.exports = require("react-ga");
+
+/***/ },
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -765,15 +786,11 @@
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _reactAddonsCssTransitionGroup = __webpack_require__(21);
+	var _reactAddonsCssTransitionGroup = __webpack_require__(22);
 
 	var _reactAddonsCssTransitionGroup2 = _interopRequireDefault(_reactAddonsCssTransitionGroup);
 
 	var _reactRouter = __webpack_require__(17);
-
-	var _reactSAlert = __webpack_require__(22);
-
-	var _reactSAlert2 = _interopRequireDefault(_reactSAlert);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -782,8 +799,6 @@
 	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-	// import '/node-modules/react-s-alert/dist/s-alert-default.css';
 
 	var App = function (_Component) {
 	  _inherits(App, _Component);
@@ -817,8 +832,8 @@
 	          'div',
 	          { className: 'nav navbar-nav' },
 	          _react2.default.createElement(
-	            'a',
-	            { className: 'nav-item nav-link active', href: '#' },
+	            _reactRouter.Link,
+	            { className: 'nav-item nav-link active', to: '/' },
 	            _react2.default.createElement(
 	              'div',
 	              { className: 'nav-item tray' },
@@ -845,18 +860,18 @@
 	            )
 	          ),
 	          _react2.default.createElement(
-	            'a',
-	            { className: 'nav-item nav-link', href: '#' },
+	            _reactRouter.Link,
+	            { className: 'nav-item nav-link', to: '/about' },
 	            'About'
 	          ),
 	          _react2.default.createElement(
-	            'a',
-	            { className: 'nav-item nav-link', href: '#' },
+	            _reactRouter.Link,
+	            { className: 'nav-item nav-link', to: '/contact' },
 	            'Contact'
 	          ),
 	          _react2.default.createElement(
-	            'a',
-	            { className: 'nav-item nav-link', href: '#' },
+	            _reactRouter.Link,
+	            { className: 'nav-item nav-link', to: '/support' },
 	            'Support'
 	          )
 	        )
@@ -868,7 +883,6 @@
 	      return _react2.default.createElement(
 	        'div',
 	        null,
-	        _react2.default.createElement(_reactSAlert2.default, { stack: true, timeout: 3000 }),
 	        this.renderHeader(),
 	        _react2.default.createElement(
 	          _reactAddonsCssTransitionGroup2.default,
@@ -910,16 +924,10 @@
 	};
 
 /***/ },
-/* 21 */
-/***/ function(module, exports) {
-
-	module.exports = require("react-addons-css-transition-group");
-
-/***/ },
 /* 22 */
 /***/ function(module, exports) {
 
-	module.exports = require("react-s-alert");
+	module.exports = require("react-addons-css-transition-group");
 
 /***/ },
 /* 23 */
@@ -1053,6 +1061,99 @@
 /* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.About = About;
+	exports.Contact = Contact;
+	exports.Support = Support;
+
+	var _react = __webpack_require__(4);
+
+	var _react2 = _interopRequireDefault(_react);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function About() {
+	  return _react2.default.createElement(
+	    "div",
+	    { className: "container" },
+	    _react2.default.createElement(
+	      "h3",
+	      null,
+	      "So you want to know more about us?"
+	    ),
+	    _react2.default.createElement(
+	      "p",
+	      null,
+	      "This app was created as an Eagle Scout project."
+	    ),
+	    _react2.default.createElement(
+	      "p",
+	      null,
+	      "We are in the final stages of testing the app right now."
+	    ),
+	    _react2.default.createElement(
+	      "p",
+	      null,
+	      "If you are interested in helping please checkout our facebook page!"
+	    ),
+	    _react2.default.createElement(
+	      "p",
+	      null,
+	      "The data that is put in here via our testing efforts will be removed before we go live."
+	    ),
+	    _react2.default.createElement(
+	      "p",
+	      null,
+	      "We hope to be live by mid Febuary 2017."
+	    ),
+	    _react2.default.createElement(
+	      "p",
+	      null,
+	      "If you have any suggestings feel free to email support@whatsmyroute.org or leave comments on our facebook page."
+	    )
+	  );
+	}
+	function Contact() {
+	  return _react2.default.createElement(
+	    "div",
+	    { className: "container" },
+	    _react2.default.createElement(
+	      "h3",
+	      null,
+	      "Trying to contact us?"
+	    ),
+	    _react2.default.createElement(
+	      "p",
+	      null,
+	      "If you want to contact us the best way is to email support@whatsmyroute.org or leave comments on our facebook page."
+	    )
+	  );
+	}
+	function Support() {
+	  return _react2.default.createElement(
+	    "div",
+	    { className: "container" },
+	    _react2.default.createElement(
+	      "h3",
+	      null,
+	      "Having Troubles?"
+	    ),
+	    _react2.default.createElement(
+	      "p",
+	      null,
+	      "The best way to get help is to email support@whatsmyroute.org or leave comments on our facebook page."
+	    )
+	  );
+	}
+
+/***/ },
+/* 25 */
+/***/ function(module, exports, __webpack_require__) {
+
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
@@ -1071,15 +1172,15 @@
 
 	var _reactApollo = __webpack_require__(9);
 
-	var _graphqlTag = __webpack_require__(25);
+	var _graphqlTag = __webpack_require__(26);
 
 	var _graphqlTag2 = _interopRequireDefault(_graphqlTag);
 
-	var _loader = __webpack_require__(26);
+	var _loader = __webpack_require__(27);
 
 	var _loader2 = _interopRequireDefault(_loader);
 
-	var _addStake = __webpack_require__(27);
+	var _addStake = __webpack_require__(28);
 
 	var _addStake2 = _interopRequireDefault(_addStake);
 
@@ -1206,13 +1307,13 @@
 	exports.default = StakesSearchData;
 
 /***/ },
-/* 25 */
+/* 26 */
 /***/ function(module, exports) {
 
 	module.exports = require("graphql-tag");
 
 /***/ },
-/* 26 */
+/* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -1241,7 +1342,7 @@
 	}
 
 /***/ },
-/* 27 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1262,7 +1363,7 @@
 
 	var _reactApollo = __webpack_require__(9);
 
-	var _graphqlTag = __webpack_require__(25);
+	var _graphqlTag = __webpack_require__(26);
 
 	var _graphqlTag2 = _interopRequireDefault(_graphqlTag);
 
@@ -1298,6 +1399,7 @@
 	      this.props.submit({ stakeName: stakeName, wardName: wardName }).then(function (_ref) {
 	        var data = _ref.data;
 
+	        alertify.logPosition('top right').success('Stake and Ward added');
 	        _this2.context.router.push('/stake/' + data.submitStake._id);
 	      }).catch(function (error) {
 	        console.log('there was an error sending the query', error);
@@ -1380,7 +1482,7 @@
 	exports.default = AddStakeWithData;
 
 /***/ },
-/* 28 */
+/* 29 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1401,15 +1503,15 @@
 
 	var _reactApollo = __webpack_require__(9);
 
-	var _graphqlTag = __webpack_require__(25);
+	var _graphqlTag = __webpack_require__(26);
 
 	var _graphqlTag2 = _interopRequireDefault(_graphqlTag);
 
-	var _loader = __webpack_require__(26);
+	var _loader = __webpack_require__(27);
 
 	var _loader2 = _interopRequireDefault(_loader);
 
-	var _addWard = __webpack_require__(29);
+	var _addWard = __webpack_require__(30);
 
 	var _addWard2 = _interopRequireDefault(_addWard);
 
@@ -1531,7 +1633,7 @@
 	exports.default = StakeData;
 
 /***/ },
-/* 29 */
+/* 30 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1552,13 +1654,9 @@
 
 	var _reactApollo = __webpack_require__(9);
 
-	var _graphqlTag = __webpack_require__(25);
+	var _graphqlTag = __webpack_require__(26);
 
 	var _graphqlTag2 = _interopRequireDefault(_graphqlTag);
-
-	var _reactSAlert = __webpack_require__(22);
-
-	var _reactSAlert2 = _interopRequireDefault(_reactSAlert);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -1585,29 +1683,25 @@
 	  _createClass(AddWard, [{
 	    key: 'addWard',
 	    value: function addWard() {
+	      var _this2 = this;
+
 	      var stakeId = this.props.stakeId;
 	      var wardName = this.wardName.value;
-	      _reactSAlert2.default.info('The ward, ' + wardName + ', was added.', {
-	        position: 'top',
-	        effect: 'scale',
-	        onShow: function onShow() {
-	          console.log('aye!');
-	        }
-	      });
-	      // this.props.submit({ stakeId, wardName }).then(({ data }) => {
-	      //   console.log('got data', data);
-	      //   // this.context.router.push(`/stake/${data.submitWard._id}`);
-	      //   this.props.refetchStake();
-	      //   this.wardName.value = '';
+	      this.props.submit({ stakeId: stakeId, wardName: wardName }).then(function (_ref) {
+	        var data = _ref.data;
 
-	      // }).catch((error) => {
-	      //   console.log('there was an error sending the query', error);
-	      // });
+	        alertify.logPosition('top right').success('Ward added');
+	        // this.context.router.push(`/stake/${data.submitWard._id}`);
+	        _this2.props.refetchStake();
+	        _this2.wardName.value = '';
+	      }).catch(function (error) {
+	        console.log('there was an error sending the query', error);
+	      });
 	    }
 	  }, {
 	    key: 'render',
 	    value: function render() {
-	      var _this2 = this;
+	      var _this3 = this;
 
 	      return _react2.default.createElement(
 	        'div',
@@ -1620,8 +1714,8 @@
 	            { htmlFor: 'wardName' },
 	            'Ward Name'
 	          ),
-	          _react2.default.createElement('input', { id: 'wardName', ref: function ref(_ref) {
-	              _this2.wardName = _ref;
+	          _react2.default.createElement('input', { id: 'wardName', ref: function ref(_ref2) {
+	              _this3.wardName = _ref2;
 	            }, type: 'text', className: 'form-control form-control-lg' })
 	        ),
 	        _react2.default.createElement('br', null),
@@ -1654,12 +1748,12 @@
 	var mAddWard = (0, _graphqlTag2.default)(_templateObject);
 
 	var AddWardWithData = (0, _reactApollo.graphql)(mAddWard, {
-	  props: function props(_ref2) {
-	    var mutate = _ref2.mutate;
+	  props: function props(_ref3) {
+	    var mutate = _ref3.mutate;
 	    return {
-	      submit: function submit(_ref3) {
-	        var stakeId = _ref3.stakeId;
-	        var wardName = _ref3.wardName;
+	      submit: function submit(_ref4) {
+	        var stakeId = _ref4.stakeId;
+	        var wardName = _ref4.wardName;
 	        return mutate({ variables: { stakeId: stakeId, wardName: wardName } });
 	      }
 	    };
@@ -1669,7 +1763,7 @@
 	exports.default = AddWardWithData;
 
 /***/ },
-/* 30 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1690,15 +1784,15 @@
 
 	var _reactApollo = __webpack_require__(9);
 
-	var _graphqlTag = __webpack_require__(25);
+	var _graphqlTag = __webpack_require__(26);
 
 	var _graphqlTag2 = _interopRequireDefault(_graphqlTag);
 
-	var _loader = __webpack_require__(26);
+	var _loader = __webpack_require__(27);
 
 	var _loader2 = _interopRequireDefault(_loader);
 
-	var _chapel = __webpack_require__(31);
+	var _chapel = __webpack_require__(32);
 
 	var _chapel2 = _interopRequireDefault(_chapel);
 
@@ -1711,8 +1805,6 @@
 	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-	// import AddWard from '../../../../src/ui/components/addWard/addWard.js';
 
 	var Ward = function (_Component) {
 	  _inherits(Ward, _Component);
@@ -1851,7 +1943,7 @@
 	exports.default = WardData;
 
 /***/ },
-/* 31 */
+/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1873,7 +1965,7 @@
 
 	var _reactApollo = __webpack_require__(9);
 
-	var _graphqlTag = __webpack_require__(25);
+	var _graphqlTag = __webpack_require__(26);
 
 	var _graphqlTag2 = _interopRequireDefault(_graphqlTag);
 
@@ -2466,7 +2558,7 @@
 	exports.AddRouteWithData = AddRouteWithData;
 
 /***/ },
-/* 32 */
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2483,7 +2575,7 @@
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _chapel = __webpack_require__(31);
+	var _chapel = __webpack_require__(32);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -2522,7 +2614,7 @@
 	NewRoute.contextTypes = {};
 
 /***/ },
-/* 33 */
+/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2543,15 +2635,15 @@
 
 	var _reactApollo = __webpack_require__(9);
 
-	var _graphqlTag = __webpack_require__(25);
+	var _graphqlTag = __webpack_require__(26);
 
 	var _graphqlTag2 = _interopRequireDefault(_graphqlTag);
 
-	var _chapel = __webpack_require__(31);
+	var _chapel = __webpack_require__(32);
 
 	var _chapel2 = _interopRequireDefault(_chapel);
 
-	var _loader = __webpack_require__(26);
+	var _loader = __webpack_require__(27);
 
 	var _loader2 = _interopRequireDefault(_loader);
 
@@ -2630,19 +2722,19 @@
 	exports.default = RouteData;
 
 /***/ },
-/* 34 */
+/* 35 */
 /***/ function(module, exports) {
 
 	module.exports = require("express");
 
 /***/ },
-/* 35 */
+/* 36 */
 /***/ function(module, exports) {
 
 	module.exports = require("path");
 
 /***/ },
-/* 36 */
+/* 37 */
 /***/ function(module, exports) {
 
 	module.exports = require("compression");
