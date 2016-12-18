@@ -46,9 +46,9 @@ class StakesSearch extends Component {
                 </p>
               :
                 <p className="text-xs-center">
-                  We did not find a stake mathcing your search.
+                  We did not find a stake matching your search.
                   <br />
-                  Click here to search again or add a new stake below.
+                  Click <Link to={'/'}> here </Link> to search again or add a new stake below.
                 </p>
             }
           </div>

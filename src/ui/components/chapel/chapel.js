@@ -214,25 +214,26 @@ export default class Chapel extends Component {
     }, []);
   }
   getDeaconColor(number){
+    if(number > 16) number = Math.ceil(Math.random()*16);
     return [
-      '#801515',
-      '#116611',
-      '#261758',
-      '#806D15',
-      '#882E61',
-      '#7B9E35',
-      '#2E4172',
-      '#AA7939',
+      '#ff0000',
+      '#ffc145',
+      '#61bd33',
+      '#45ffff',
+      '#3f00bd',
       
-      
-      '#D46A6A',
-      '#55AA55',
-      '#615192',
-      '#FCEDA5',
-      '#CA85AC',
-      '#D0EB9A',
-      '#7584A9',
-      '#FCD7A5',
+      '#bd0000',
+      '#ffff00',
+      '#00ff00',
+      '#45c1ff',
+      '#ff00ff',
+
+      '#bd6133',
+      '#bdbd00',
+      '#00ffaa',
+      '#4583ff',
+      '#ff00aa',
+      '#bd3361',
     ][number];
   }
   addDeacon(){

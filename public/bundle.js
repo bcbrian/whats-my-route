@@ -38263,7 +38263,7 @@
 /* 268 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(global, module) {'use strict';
+	/* WEBPACK VAR INJECTION */(function(module, global) {'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
@@ -38275,7 +38275,7 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-	var root; /* global window */
+	var root = module; /* global window */
 
 
 	if (typeof self !== 'undefined') {
@@ -38284,15 +38284,13 @@
 	  root = window;
 	} else if (typeof global !== 'undefined') {
 	  root = global;
-	} else if (true) {
-	  root = module;
 	} else {
 	  root = Function('return this')();
 	}
 
 	var result = (0, _ponyfill2['default'])(root);
 	exports['default'] = result;
-	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }()), __webpack_require__(247)(module)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(247)(module), (function() { return this; }())))
 
 /***/ },
 /* 269 */
@@ -47490,16 +47488,6 @@
 	            }
 	            return _this.setVariables(opts.variables);
 	        };
-	        this._setOptionsNoResult = function (opts) {
-	            _this.options = assign({}, _this.options, opts);
-	            if (opts.pollInterval) {
-	                _this.startPolling(opts.pollInterval);
-	            }
-	            else if (opts.pollInterval === 0) {
-	                _this.stopPolling();
-	            }
-	            _this._setVariablesNoResult(opts.variables);
-	        };
 	        this.setVariables = function (variables) {
 	            var newVariables = assign({}, _this.variables, variables);
 	            if (isEqual(newVariables, _this.variables)) {
@@ -47511,18 +47499,6 @@
 	                    variables: _this.variables,
 	                }))
 	                    .then(function (result) { return _this.queryManager.transformResult(result); });
-	            }
-	        };
-	        this._setVariablesNoResult = function (variables) {
-	            var newVariables = assign({}, _this.variables, variables);
-	            if (isEqual(newVariables, _this.variables)) {
-	                return;
-	            }
-	            else {
-	                _this.variables = newVariables;
-	                _this.queryManager.fetchQuery(_this.queryId, assign(_this.options, {
-	                    variables: _this.variables,
-	                }));
 	            }
 	        };
 	        this.fetchMore = function (fetchMoreOptions) {
@@ -47985,7 +47961,7 @@
 	                    return;
 	                }
 	                if (this.querySubscription) {
-	                    this.queryObservable._setOptionsNoResult(opts);
+	                    this.queryObservable.setOptions(opts);
 	                    assign(this.data, { loading: this.queryObservable.currentResult().loading }, observableQueryFields(this.queryObservable));
 	                    return;
 	                }
@@ -51191,10 +51167,18 @@
 	    var _this = _possibleConstructorReturn(this, (Home.__proto__ || Object.getPrototypeOf(Home)).call(this, props, context));
 
 	    _this.search = _this.search.bind(_this);
+	    _this.searchOnKeyUp = _this.searchOnKeyUp.bind(_this);
 	    return _this;
 	  }
 
 	  _createClass(Home, [{
+	    key: 'searchOnKeyUp',
+	    value: function searchOnKeyUp(event) {
+	      event.preventDefault();
+	      if (event.keyCode !== 13) return;
+	      this.search(event);
+	    }
+	  }, {
 	    key: 'search',
 	    value: function search(event) {
 	      event.preventDefault();
@@ -51220,7 +51204,7 @@
 	              { className: 'tray' },
 	              _react2.default.createElement(
 	                'svg',
-	                { width: '100%', height: '100%', viewBox: '0 0 962 684', version: '1.1', xmlns: 'http://www.w3.org/2000/svg', xmlnsXlink: 'http://www.w3.org/1999/xlink', xmlSpace: 'preserve', style: { fillRule: 'evenodd', clipRule: 'evenodd', strokeLinejoin: 'round', strokeMiterlimit: 1.41421 } },
+	                { width: 'auto', height: 'auto', viewBox: '0 0 962 684', version: '1.1', xmlns: 'http://www.w3.org/2000/svg', xmlnsXlink: 'http://www.w3.org/1999/xlink', xmlSpace: 'preserve', style: { fillRule: 'evenodd', clipRule: 'evenodd', strokeLinejoin: 'round', strokeMiterlimit: 1.41421 } },
 	                _react2.default.createElement(
 	                  'g',
 	                  { transform: 'matrix(1,0,0,1,-613.332,-1694)' },
@@ -51252,7 +51236,7 @@
 	            _react2.default.createElement(
 	              'div',
 	              { className: 'input-group input-group-lg' },
-	              _react2.default.createElement('input', { ref: function ref(_ref) {
+	              _react2.default.createElement('input', { onKeyUp: this.searchOnKeyUp, ref: function ref(_ref) {
 	                  _this2.searchString = _ref;
 	                }, type: 'text', className: 'form-control', placeholder: 'What\'s your stake?' }),
 	              _react2.default.createElement(
@@ -51477,9 +51461,15 @@
 	            ) : _react2.default.createElement(
 	              'p',
 	              { className: 'text-xs-center' },
-	              'We did not find a stake mathcing your search.',
+	              'We did not find a stake matching your search.',
 	              _react2.default.createElement('br', null),
-	              'Click here to search again or add a new stake below.'
+	              'Click ',
+	              _react2.default.createElement(
+	                _reactRouter.Link,
+	                { to: '/' },
+	                ' here '
+	              ),
+	              ' to search again or add a new stake below.'
 	            )
 	          )
 	        ),
@@ -56939,7 +56929,8 @@
 	  }, {
 	    key: 'getDeaconColor',
 	    value: function getDeaconColor(number) {
-	      return ['#801515', '#116611', '#261758', '#806D15', '#882E61', '#7B9E35', '#2E4172', '#AA7939', '#D46A6A', '#55AA55', '#615192', '#FCEDA5', '#CA85AC', '#D0EB9A', '#7584A9', '#FCD7A5'][number];
+	      if (number > 16) number = Math.ceil(Math.random() * 16);
+	      return ['#ff0000', '#ffc145', '#61bd33', '#45ffff', '#3f00bd', '#bd0000', '#ffff00', '#00ff00', '#45c1ff', '#ff00ff', '#bd6133', '#bdbd00', '#00ffaa', '#4583ff', '#ff00aa', '#bd3361'][number];
 	    }
 	  }, {
 	    key: 'addDeacon',

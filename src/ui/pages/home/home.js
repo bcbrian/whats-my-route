@@ -4,8 +4,13 @@ export default class Home extends Component {
   constructor(props, context) {
     super(props, context);
     this.search = this.search.bind(this);
+    this.searchOnKeyUp = this.searchOnKeyUp.bind(this);
   }
-  
+  searchOnKeyUp(event) {
+    event.preventDefault();
+    if (event.keyCode !== 13) return;
+    this.search(event);
+  }
   search(event) {
     event.preventDefault();
     if (this.searchString.value === '') return;
@@ -18,7 +23,7 @@ export default class Home extends Component {
         <div className="container">
           <div className="container">
             <div className="tray">
-              <svg width="100%" height="100%" viewBox="0 0 962 684" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" xmlSpace="preserve" style={{fillRule: 'evenodd', clipRule: 'evenodd', strokeLinejoin: 'round', strokeMiterlimit: 1.41421 }}>
+              <svg width="auto" height="auto" viewBox="0 0 962 684" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" xmlSpace="preserve" style={{fillRule: 'evenodd', clipRule: 'evenodd', strokeLinejoin: 'round', strokeMiterlimit: 1.41421 }}>
                   <g transform="matrix(1,0,0,1,-613.332,-1694)">
                       <g id="handle and tray" transform="matrix(0.707021,0,0,1,320.567,0)">
                           <path d="M1477.75,1694C1549.09,1694 1607,1751.91 1607,1823.25L1607,2081.75C1607,2153.09 1549.09,2211 1477.75,2211L729.25,2211C657.915,2211 600,2153.09 600,2081.75L600,1823.25C600,1751.91 657.914,1694 729.25,1694L1477.75,1694ZM1399.75,1784L799.25,1784C749.439,1784 699,1824.44 699,1874.25L699,2084.75C699,2134.56 749.44,2175 799.25,2175L1399.75,2175C1449.56,2175 1500,2134.56 1500,2084.75L1500,1874.25C1500,1824.44 1449.56,1784 1399.75,1784Z" style={{fill: "rgb(171, 171, 171)"}}/>
@@ -37,7 +42,7 @@ export default class Home extends Component {
             </div>
             
             <div className="input-group input-group-lg">
-              <input ref={(ref) => { this.searchString = ref; } } type="text" className="form-control" placeholder="What's your stake?" />
+              <input onKeyUp={this.searchOnKeyUp} ref={(ref) => { this.searchString = ref; } } type="text" className="form-control" placeholder="What's your stake?" />
               <span className="input-group-btn">
                 <button onClick={this.search} className="btn btn-secondary" type="button">
                   <i className="fa fa-search" aria-hidden="true"></i>
