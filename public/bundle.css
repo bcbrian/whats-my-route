@@ -9414,14 +9414,12 @@ html, body {
     left: 220px; }
 
 .deacon {
-  width: 10px;
-  height: 10px;
-  border-radius: 5px;
+  width: 14px;
+  height: 14px;
+  border-radius: 7px;
   background-color: #00aa8b;
   border: solid 1px;
-  top: 102px;
-  position: absolute;
-  left: 10px; }
+  position: absolute; }
   .deacon.route {
     border-radius: 5px 5px 5px 0px; }
     .deacon.route.routeDown {

@@ -12,40 +12,34 @@ const StakeSchema = Mongoose.Schema({
   wards: [{
     _id: {
       type: String,
-      'default': shortid.generate
+      default: shortid.generate
     },
     name: String,
     routes: [{
       _id: {
         type: String,
-        'default': shortid.generate
+        default: shortid.generate
       },
       chapel: [Number],
       deacons: [{
         _id: {
           type: String,
-          'default': shortid.generate
+          default: shortid.generate
         },
-        route: Number,
         color: String,
-        passToBishop: Boolean,
-        seat:{
-          bench: String,
-          top: Number,
-          left: Number,
-          position: Number,
-        },
-        route:{
-          bench: String,
-          top: Number,
-          left: Number,
-          direction: String,
-        },
-        bishop:{
+        seat: {
           top: Number,
           left: Number,
         },
-      }]
+        current: {
+          top: Number,
+          left: Number,
+        },
+        route: [[{
+          x: Number,
+          y: Number,
+        }]],
+      }],
     }],
   }],
 });

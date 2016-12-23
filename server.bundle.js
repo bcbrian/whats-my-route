@@ -85,9 +85,9 @@
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	// server.js
-	var express = __webpack_require__(35);
-	var path = __webpack_require__(36);
-	var compression = __webpack_require__(37);
+	var express = __webpack_require__(36);
+	var path = __webpack_require__(37);
+	var compression = __webpack_require__(38);
 	// we'll use this to render our app to an html string
 
 	// and these to match the url to routes and then render
@@ -358,7 +358,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	var schema = "\n\ntype SeatPosition {\n  bench: String\n  position: Int\n  top: Int\n  left: Int\n}\ntype DeaconRoute {\n  bench: String\n  direction: String\n  top: Int\n  left: Int\n}\n\ntype BishopPosition {\n  top: Int\n  left: Int\n}\n\ninput SeatPositionInput {\n  bench: String\n  position: Int\n  top: Int\n  left: Int\n}\ninput DeaconRouteInput {\n  bench: String\n  direction: String\n  top: Int\n  left: Int\n}\n\ninput BishopPositionInput {\n  top: Int\n  left: Int\n}\n\ntype Deacon {\n  _id: String!\n  route: Int\n  color: String\n  passToBishop: Boolean\n  seat: SeatPosition\n  route: DeaconRoute\n  bishop: BishopPosition\n}\n\ninput DeaconInput {\n  _id: String!\n  route: Int\n  color: String\n  passToBishop: Boolean\n  seat: SeatPositionInput\n  route: DeaconRouteInput\n  bishop: BishopPositionInput\n}\n\ntype Route {\n  _id: String!\n  chapel: [Int]\n  deacons: [Deacon]\n  deaconCount: Int\n}\n\ntype Ward {\n  _id: String!\n  name: String\n  routes: [Route]\n  routeCount: Int\n}\n\ntype Stake {\n  _id: String!\n  name: String\n  wards: [Ward]\n  wardCount: Int\n}\n\n\n# the schema allows the following query:\ntype Query {\n  stakes: [Stake]\n  \n  searchStakes(\n    searchString: String!\n  ): [Stake] \n  \n  getStake(\n      stakeId: String!\n  ): Stake\n  \n  getWard(\n      stakeId: String!\n      wardId: String!\n  ): Ward\n  \n  getRoute(\n      stakeId: String!\n      wardId: String!\n      routeId: String!\n  ): Route\n \n}\n\ntype Mutation {\n  submitStake(\n    stakeName: String!\n    wardName: String!\n  ): Stake\n  \n  submitWard(\n    stakeId: String!\n    wardName: String!\n  ): Stake\n  \n  submitRoute(\n    stakeId: String!\n    wardId: String!\n    chapel: [Int]\n    deacons: [DeaconInput]\n  ): Route\n}\n\n";
+	var schema = "\n\ntype SeatPosition {\n  top: Int\n  left: Int\n}\ntype CurrentPosition {\n  top: Int\n  left: Int\n}\ntype DeaconRoute {\n  x: Int\n  y: Int\n}\n\ninput SeatPositionInput {\n  top: Int\n  left: Int\n}\n\ninput CurrentPositionInput {\n  top: Int\n  left: Int\n}\n\ninput DeaconRouteInput {\n  x: Int\n  y: Int\n}\n\ntype Deacon {\n  _id: String!\n  color: String\n  seat: SeatPosition\n  current: CurrentPosition\n  route: [[DeaconRoute]]\n}\n\ninput DeaconInput {\n  _id: String!\n  color: String\n  seat: SeatPositionInput\n  current: CurrentPositionInput\n  route: [[DeaconRouteInput]]\n}\n\ntype Route {\n  _id: String!\n  chapel: [Int]\n  deacons: [Deacon]\n  deaconCount: Int\n}\n\ntype Ward {\n  _id: String!\n  name: String\n  routes: [Route]\n  routeCount: Int\n}\n\ntype Stake {\n  _id: String!\n  name: String\n  wards: [Ward]\n  wardCount: Int\n}\n\n\n# the schema allows the following query:\ntype Query {\n  stakes: [Stake]\n\n  searchStakes(\n    searchString: String!\n  ): [Stake]\n\n  getStake(\n      stakeId: String!\n  ): Stake\n\n  getWard(\n      stakeId: String!\n      wardId: String!\n  ): Ward\n\n  getRoute(\n      stakeId: String!\n      wardId: String!\n      routeId: String!\n  ): Route\n\n}\n\ntype Mutation {\n  submitStake(\n    stakeName: String!\n    wardName: String!\n  ): Stake\n\n  submitWard(\n    stakeId: String!\n    wardName: String!\n  ): Stake\n\n  submitRoute(\n    stakeId: String!\n    wardId: String!\n    chapel: [Int]\n    deacons: [DeaconInput]\n  ): Route\n}\n\n";
 
 	exports.default = schema;
 
@@ -552,17 +552,17 @@
 	    route: function route(_ref14, _, context) {
 	      var _route = _ref14.route;
 
-	      return _route || {};
+	      return _route || [];
 	    },
 	    seat: function seat(_ref15, _, context) {
 	      var _seat = _ref15.seat;
 
 	      return _seat || {};
 	    },
-	    bishop: function bishop(_ref16, _, context) {
-	      var _bishop = _ref16.bishop;
+	    current: function current(_ref16, _, context) {
+	      var _current = _ref16.current;
 
-	      return _bishop || {};
+	      return _current || {};
 	    }
 	  }
 	};
@@ -580,8 +580,6 @@
 	});
 	exports.Stakes = undefined;
 
-	var _ref;
-
 	var _mongoose = __webpack_require__(15);
 
 	var _mongoose2 = _interopRequireDefault(_mongoose);
@@ -591,8 +589,6 @@
 	var _shortid2 = _interopRequireDefault(_shortid);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 	var mongo = _mongoose2.default.connect(process.env.MONGO_URL);
 
@@ -605,38 +601,34 @@
 	  wards: [{
 	    _id: {
 	      type: String,
-	      'default': _shortid2.default.generate
+	      default: _shortid2.default.generate
 	    },
 	    name: String,
 	    routes: [{
 	      _id: {
 	        type: String,
-	        'default': _shortid2.default.generate
+	        default: _shortid2.default.generate
 	      },
 	      chapel: [Number],
-	      deacons: [(_ref = {
+	      deacons: [{
 	        _id: {
 	          type: String,
-	          'default': _shortid2.default.generate
+	          default: _shortid2.default.generate
 	        },
-	        route: Number,
 	        color: String,
-	        passToBishop: Boolean,
 	        seat: {
-	          bench: String,
 	          top: Number,
-	          left: Number,
-	          position: Number
-	        }
-	      }, _defineProperty(_ref, 'route', {
-	        bench: String,
-	        top: Number,
-	        left: Number,
-	        direction: String
-	      }), _defineProperty(_ref, 'bishop', {
-	        top: Number,
-	        left: Number
-	      }), _ref)]
+	          left: Number
+	        },
+	        current: {
+	          top: Number,
+	          left: Number
+	        },
+	        route: [[{
+	          x: Number,
+	          y: Number
+	        }]]
+	      }]
 	    }]
 	  }]
 	});
@@ -714,11 +706,11 @@
 
 	var _ward2 = _interopRequireDefault(_ward);
 
-	var _newRoute = __webpack_require__(33);
+	var _newRoute = __webpack_require__(34);
 
 	var _newRoute2 = _interopRequireDefault(_newRoute);
 
-	var _route = __webpack_require__(34);
+	var _route = __webpack_require__(35);
 
 	var _route2 = _interopRequireDefault(_route);
 
@@ -1987,11 +1979,13 @@
 
 	var _shortid2 = _interopRequireDefault(_shortid);
 
+	var _reactDraggable = __webpack_require__(33);
+
+	var _reactDraggable2 = _interopRequireDefault(_reactDraggable);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _taggedTemplateLiteral(strings, raw) { return Object.freeze(Object.defineProperties(strings, { raw: { value: Object.freeze(raw) } })); }
-
-	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -2007,24 +2001,26 @@
 
 	    var _this = _possibleConstructorReturn(this, (Chapel.__proto__ || Object.getPrototypeOf(Chapel)).call(this, props, context));
 
-	    console.log(props);
-
 	    _this.selectThisBench = _this.selectThisBench.bind(_this);
 	    _this.addDeacon = _this.addDeacon.bind(_this);
 	    _this.saveRoute = _this.saveRoute.bind(_this);
 	    _this.incrementStep = _this.incrementStep.bind(_this);
+	    _this.finalizeRoute = _this.finalizeRoute.bind(_this);
+	    _this.addRouteSegment = _this.addRouteSegment.bind(_this);
 	    _this.setDeacon = _this.setDeacon.bind(_this);
 	    _this.selectSeatingBench = _this.selectSeatingBench.bind(_this);
-	    _this.passToBishop = _this.passToBishop.bind(_this);
-	    _this.selectFirstBech = _this.selectFirstBech.bind(_this);
-	    _this.setPassDirection = _this.setPassDirection.bind(_this);
-	    _this.toggleSelectSeat = _this.toggleSelectSeat.bind(_this);
-	    _this.toggleSelectRoute = _this.toggleSelectRoute.bind(_this);
+	    _this.toggleSelectingSeat = _this.toggleSelectingSeat.bind(_this);
+	    _this.toggleSettingRoute = _this.toggleSettingRoute.bind(_this);
+
+	    _this.playRoute = _this.playRoute.bind(_this);
+
+	    // this.setDeaconSeat = this.setDeaconSeat.bind(this);
 	    _this.state = {
-	      selectedBench: '0:0:0',
-	      selectSeat: false,
-	      selectRoute: false,
+	      selectingSeat: false,
+	      settingRoute: false,
 	      deacons: props.deacons,
+	      routeIndex: 0,
+	      animationIndex: 0,
 	      step: 1,
 	      deaconId: ''
 	    };
@@ -2032,6 +2028,11 @@
 	  }
 
 	  _createClass(Chapel, [{
+	    key: 'setRouteIndex',
+	    value: function setRouteIndex(routeIndex) {
+	      this.setState({ routeIndex: routeIndex });
+	    }
+	  }, {
 	    key: 'selectThisBench',
 	    value: function selectThisBench(_ref) {
 	      var selectedBench = _ref.target.dataset.selectedBench;
@@ -2039,21 +2040,21 @@
 	      this.setState({ selectedBench: selectedBench });
 	    }
 	  }, {
-	    key: 'toggleSelectSeat',
-	    value: function toggleSelectSeat() {
-	      this.setState({ selectSeat: !this.state.selectSeat });
+	    key: 'toggleSelectingSeat',
+	    value: function toggleSelectingSeat() {
+	      this.setState({ selectingSeat: !this.state.selectingSeat });
 	    }
 	  }, {
-	    key: 'toggleSelectRoute',
-	    value: function toggleSelectRoute() {
-	      this.setState({ selectRoute: !this.state.selectRoute });
+	    key: 'toggleSettingRoute',
+	    value: function toggleSettingRoute() {
+	      this.setState({ settingRoute: !this.state.settingRoute });
 	    }
 	  }, {
 	    key: 'incrementStep',
 	    value: function incrementStep() {
 	      var step = this.state.step;
 	      step++;
-	      if (step > 5) step = 1;
+	      if (step > 3) step = 1;
 	      this.setState({ step: step });
 	    }
 	  }, {
@@ -2090,19 +2091,7 @@
 	        _react2.default.createElement('div', { 'data-selected-bench': '' + position, className: 'benchEnd benchEndLeft' }),
 	        _react2.default.createElement('div', { 'data-selected-bench': '' + position, className: 'benchBack' }),
 	        _react2.default.createElement('div', { 'data-selected-bench': '' + position, className: 'benchSeat' }),
-	        _react2.default.createElement('div', { 'data-selected-bench': '' + position, className: 'benchEnd benchEndRight' }),
-	        this.state.selectSeat ? _react2.default.createElement('div', { 'data-selected-bench': '' + position, className: 'benchTarget' }) : this.state.selectRoute ? _react2.default.createElement(
-	          'div',
-	          null,
-	          _react2.default.createElement('div', { 'data-selected-bench': position + ':right', className: 'benchTarget benchRight' }),
-	          _react2.default.createElement('div', { 'data-selected-bench': position + ':left', className: 'benchTarget benchLeft' })
-	        ) : null,
-	        this.state.selectSeat ? this.state.selectedBench !== '' + position ? null : _react2.default.createElement('div', { className: 'benchHightlight' }) : this.state.selectRoute ? _react2.default.createElement(
-	          'div',
-	          null,
-	          this.state.selectedBench !== position + ':right' ? null : _react2.default.createElement('div', { className: 'benchHightlight benchRight' }),
-	          this.state.selectedBench !== position + ':left' ? null : _react2.default.createElement('div', { className: 'benchHightlight benchLeft' })
-	        ) : null
+	        _react2.default.createElement('div', { 'data-selected-bench': '' + position, className: 'benchEnd benchEndRight' })
 	      );
 	    }
 	  }, {
@@ -2174,40 +2163,108 @@
 	      );
 	    }
 	  }, {
+	    key: 'setDeaconSeat',
+	    value: function setDeaconSeat(deaconId, event) {
+	      if (this.state.deaconId !== deaconId) return;
+
+	      var deacons = this.state.deacons;
+	      var deacon = deacons.filter(function (d) {
+	        return d._id === deaconId;
+	      })[0];
+	      var target = event.target;
+	      var parentRect = target.parentElement.getBoundingClientRect();
+	      var targetRect = target.getBoundingClientRect();
+	      var offsetLeft = targetRect.left - parentRect.left - 2; //minus 2 for the border
+	      var offsetTop = targetRect.top - parentRect.top - 2;
+
+	      var left = offsetLeft;
+	      var top = offsetTop;
+	      if (this.state.selectingSeat) {
+	        deacon.seat.left = left;
+	        deacon.seat.top = top;
+	      }
+
+	      if (this.state.settingRoute) {
+	        this.recordDeconMovements(true, deaconId, event);
+	      }
+	      deacon.current.left = left;
+	      deacon.current.top = top;
+	      this.setState({ deacons: deacons });
+	    }
+	  }, {
+	    key: 'setDeaconStart',
+	    value: function setDeaconStart(deaconId, event) {
+	      // Do some logic to figure out what whe should do
+	    }
+	  }, {
+	    key: 'recordDeconMovements',
+	    value: function recordDeconMovements(override, deaconId, event, anotherThing) {
+	      if (!this.state.settingRoute) {
+	        if (!override) {
+	          return;
+	        } else {
+	          console.log('HI override: ', override);
+	        }
+	      }
+	      if (this.state.deaconId !== deaconId) return;
+	      console.log('anotherThing: ', anotherThing);
+	      var deacons = this.state.deacons;
+	      var deacon = deacons.filter(function (d) {
+	        return d._id === deaconId;
+	      })[0];
+	      var target = event.target;
+	      var parentRect = target.parentElement.getBoundingClientRect();
+	      var targetRect = target.getBoundingClientRect();
+	      var offsetLeft = targetRect.left - parentRect.left - 2; //minus 2 for the border
+	      var offsetTop = targetRect.top - parentRect.top - 2;
+
+	      var left = offsetLeft;
+	      var top = offsetTop;
+
+	      deacon.seat.left = left;
+	      if (deacon.route.length === 0) {
+	        deacon.route.push([]);
+	      }
+	      deacon.route[deacon.route.length - 1].push({
+	        x: left,
+	        y: top
+	      });
+
+	      this.setState({ deacons: deacons });
+	    }
+	  }, {
 	    key: 'renderDeacons',
 	    value: function renderDeacons() {
-	      // <div className="deacon"></div>
-	      // <div className="deacon route routeDown"></div>
-	      // <div className="deacon route routeUp"></div>
+	      var _this4 = this;
+
 	      return this.state.deacons.reduce(function (allDeacons, deacon) {
 	        var deaconPositions = [];
 	        //push in seat position
 	        //get seat bench position
 
-	        deaconPositions.push(_react2.default.createElement('div', { key: deacon._id + ':seat', className: 'deacon', style: {
-	            left: deacon.seat.left + 'px',
-	            top: deacon.seat.top + 'px',
-	            backgroundColor: deacon.color
-	          } }));
-	        //push in pass to bishop position
-	        if (deacon.passToBishop) {
+	        deaconPositions.push(_react2.default.createElement(
+	          _reactDraggable2.default,
+	          {
+	            key: deacon._id + ':seat',
+	            position: {
+	              x: deacon.current.left,
+	              y: deacon.current.top
+	            },
+	            onStop: _this4.setDeaconSeat.bind(_this4, deacon._id),
+	            onStart: _this4.setDeaconStart.bind(_this4, deacon._id),
+	            onDrag: _this4.recordDeconMovements.bind(_this4, false, deacon._id)
+	          },
+	          _react2.default.createElement('div', {
 
-	          deaconPositions.push(_react2.default.createElement('div', { key: deacon._id + ':bishop', className: 'deacon', style: {
-	              left: deacon.bishop.left + 'px',
-	              top: deacon.bishop.top + 'px',
+	            className: 'deacon',
+	            ref: function ref(_ref5) {
+	              _this4[deacon._id + ':seat'] = _ref5;
+	            },
+	            style: {
 	              backgroundColor: deacon.color
-	            } }));
-	        }
-	        // push in route position
-	        // "0:1:0:right"
-	        if (deacon.route.bench) {
-
-	          deaconPositions.push(_react2.default.createElement('div', { key: deacon._id + ':route', className: 'deacon route ' + (deacon.route.direction ? 'route' + deacon.route.direction : ''), style: {
-	              left: deacon.route.left + 'px',
-	              top: deacon.route.top + 'px',
-	              backgroundColor: deacon.color
-	            } }));
-	        }
+	            }
+	          })
+	        ));
 	        return [].concat(allDeacons, deaconPositions);
 	      }, []);
 	    }
@@ -2223,35 +2280,27 @@
 	      var deacons = this.state.deacons;
 	      var deacon = {
 	        _id: _shortid2.default.generate(),
-	        color: this.getDeaconColor(deacons.length), // TODO: make list of safe colors :) 
-	        passToBishop: false,
+	        color: this.getDeaconColor(deacons.length), // TODO: make list of safe colors :)
 	        seat: {
-	          bench: '',
 	          top: 0,
-	          left: 0,
-	          position: null
+	          left: 0
 	        },
-	        route: {
-	          bench: '',
+	        current: {
 	          top: 0,
-	          left: 0,
-	          direction: ''
+	          left: 0
 	        },
-	        bishop: {
-	          top: null,
-	          left: null
-	        }
+	        route: []
 	      };
 	      deacons.push(deacon);
 	      this.setDeacon(deacon._id);
-	      this.toggleSelectSeat();
+	      this.toggleSelectingSeat();
 	      this.setState({ deacons: deacons });
 	      this.incrementStep();
 	    }
 	  }, {
 	    key: 'saveRoute',
 	    value: function saveRoute() {
-	      var _this4 = this;
+	      var _this5 = this;
 
 	      var stakeId = this.props.stakeId;
 	      var wardId = this.props.wardId;
@@ -2263,127 +2312,121 @@
 	        wardId: wardId,
 	        chapel: chapel,
 	        deacons: deacons
-	      }).then(function (_ref5) {
-	        var data = _ref5.data;
+	      }).then(function (_ref6) {
+	        var data = _ref6.data;
 
-	        _this4.context.router.push('/stake/' + _this4.props.stakeId + '/ward/' + wardId + '/route/' + data.submitRoute._id);
+	        _this5.context.router.push('/stake/' + _this5.props.stakeId + '/ward/' + wardId + '/route/' + data.submitRoute._id);
 	      }).catch(function (error) {
 	        console.log('there was an error sending the query', error);
 	      });
 	    }
 	  }, {
-	    key: 'selectSeatingBench',
-	    value: function selectSeatingBench() {
-	      var _this5 = this;
-
-	      this.toggleSelectSeat();
-	      var deacons = this.state.deacons;
-	      var deacon = deacons.filter(function (d) {
-	        return d._id === _this5.state.deaconId;
-	      })[0];
-	      deacon.seat.bench = this.state.selectedBench;
-
-	      var seatBench = this[deacon.seat.bench];
-
-	      var deaconsSittingHere = deacons.filter(function (d) {
-	        return d.seat.bench === deacon.seat.bench;
-	      });
-	      var currentSeatPosition = Math.max.apply(Math, _toConsumableArray(deaconsSittingHere.map(function (d) {
-	        return d.seat.position;
-	      })));
-	      deacon.seat.position = currentSeatPosition || currentSeatPosition === 0 ? currentSeatPosition + 1 : 0;
-
-	      var top = 0;
-	      var left = 0;
-	      if (seatBench) {
-	        top = seatBench.offsetTop;
-	        left = seatBench.offsetLeft;
-	      }
-
-	      deacon.seat.top = top + 2;
-	      deacon.seat.left = left + 1 + 11 * (deacon.seat.position - 1);
-
-	      this.setState({ deacons: deacons });
+	    key: 'finalizeRoute',
+	    value: function finalizeRoute() {
+	      this.toggleSettingRoute();
+	      this.setRouteIndex(0);
+	      this.setCurrentPositionToSeat();
 	      this.incrementStep();
 	    }
 	  }, {
-	    key: 'passToBishop',
-	    value: function passToBishop(_ref6) {
+	    key: 'addRouteSegment',
+	    value: function addRouteSegment() {
 	      var _this6 = this;
 
-	      var _passToBishop = _ref6.target.dataset.passToBishop;
-
+	      // Do some logic so that we have incremented what one we are saving
 	      var deacons = this.state.deacons;
 	      var deacon = deacons.filter(function (d) {
 	        return d._id === _this6.state.deaconId;
 	      })[0];
-	      deacon.passToBishop = _passToBishop === 'true';
-	      if (deacon.passToBishop) {
-	        var bishopChair = this.bishopChair;
-	        var top = 0;
-	        var left = 0;
-	        if (bishopChair) {
-	          top = bishopChair.offsetTop + 20;
-	          left = bishopChair.offsetLeft + bishopChair.offsetParent.offsetLeft - 15;
-	        }
-	        deacon.bishop.top = top;
-	        deacon.bishop.left = left;
-	      }
-
-	      this.toggleSelectRoute();
+	      deacon.route.push([{
+	        x: deacon.current.left,
+	        y: deacon.current.top
+	      }]);
+	      this.setRouteIndex(this.state.routeIndex + 1);
 	      this.setState({ deacons: deacons });
-	      this.incrementStep();
+
+	      this.setCurrentPositions(this.state.routeIndex + 1);
 	    }
 	  }, {
-	    key: 'selectFirstBech',
-	    value: function selectFirstBech() {
+	    key: 'setCurrentPositions',
+	    value: function setCurrentPositions(index) {
 	      var _this7 = this;
 
-	      this.toggleSelectRoute();
 	      var deacons = this.state.deacons;
-	      var deacon = deacons.filter(function (d) {
-	        return d._id === _this7.state.deaconId;
-	      })[0];
-	      deacon.route.bench = this.state.selectedBench;
-
-	      var routeBenchId = deacon.route.bench;
-	      var routeBench = void 0;
-	      var top = 0;
-	      var left = 0;
-	      var side = 'right';
-	      if (routeBenchId.includes(':right')) {
-	        routeBenchId = routeBenchId.replace(/:right/i, '');
-	        routeBench = this[routeBenchId];
-	        top = routeBench.offsetTop + 2;
-	        left = routeBench.offsetLeft + routeBench.offsetWidth;
-	      } else {
-	        side = 'left';
-	        routeBenchId = routeBenchId.replace(/:left/i, '');
-	        routeBench = this[routeBenchId];
-	        top = routeBench.offsetTop + 2;
-	        left = routeBench.offsetLeft - 10;
-	      }
-
-	      deacon.route.top = top;
-	      deacon.route.left = left;
-
+	      console.log('INDEX: ' + index);
+	      deacons.forEach(function (deacon) {
+	        if (_this7.state.deaconId === deacon._id && (_this7.state.settingRoute || _this7.state.selectingSeat)) return;
+	        var currentRoute = deacon.route[index];
+	        var lastPositionInCurrentRoute = currentRoute[currentRoute.length - 1];
+	        deacon.current.left = lastPositionInCurrentRoute.x;
+	        deacon.current.top = lastPositionInCurrentRoute.y;
+	        console.log('INDEX: ' + index + ' DEACON: ' + deacon._id + ' x:' + Math.ceil(deacon.current.left) + ' y:' + Math.ceil(deacon.current.top));
+	      });
 	      this.setState({ deacons: deacons });
+	    }
+	  }, {
+	    key: 'setCurrentPositionToSeat',
+	    value: function setCurrentPositionToSeat() {
+	      var deacons = this.state.deacons;
+	      deacons.forEach(function (deacon) {
+	        deacon.current.left = deacon.seat.left;
+	        deacon.current.top = deacon.seat.top;
+	      });
+	      this.setState({ deacons: deacons });
+	    }
+	  }, {
+	    key: 'selectSeatingBench',
+	    value: function selectSeatingBench() {
+	      this.toggleSelectingSeat();
+	      this.toggleSettingRoute();
+	      this.setCurrentPositions(0);
 	      this.incrementStep();
 	    }
 	  }, {
-	    key: 'setPassDirection',
-	    value: function setPassDirection(_ref7) {
+	    key: 'playRoute',
+	    value: function playRoute() {
 	      var _this8 = this;
 
-	      var passDirection = _ref7.target.dataset.passDirection;
-
-	      var deacons = this.state.deacons;
-	      var deacon = deacons.filter(function (d) {
-	        return d._id === _this8.state.deaconId;
-	      })[0];
-	      deacon.route.direction = passDirection;
-	      this.setState({ deacons: deacons });
-	      this.incrementStep();
+	      var clearMe = setInterval(function () {
+	        var deacons = _this8.state.deacons;
+	        var routeIndex = _this8.state.routeIndex;
+	        var animationIndex = _this8.state.animationIndex;
+	        var maxNumberOfRoutes = 0;
+	        var maxNumberOfAnimations = 0;
+	        // console.log('ANIMATE: ', animationIndex);
+	        deacons.forEach(function (deacon) {
+	          // console.log('deacon: ', deacon._id);
+	          // console.log('deacon.route: ', deacon.route);
+	          var currentRoute = deacon.route[routeIndex];
+	          // console.log('currentRoute: ', currentRoute);
+	          var currentAnimation = currentRoute[animationIndex] || currentRoute[currentRoute.length - 1];
+	          console.log('currentAnimation: ', currentAnimation);
+	          if (maxNumberOfRoutes < deacon.route.length) {
+	            maxNumberOfRoutes = deacon.route.length;
+	          }
+	          if (maxNumberOfAnimations < currentRoute.length) {
+	            maxNumberOfAnimations = currentRoute.length;
+	          }
+	          deacon.current.left = currentAnimation.x;
+	          deacon.current.top = currentAnimation.y;
+	        });
+	        _this8.setState({
+	          deacons: deacons,
+	          routeIndex: animationIndex === maxNumberOfAnimations ? routeIndex + 1 : routeIndex,
+	          animationIndex: animationIndex + 1
+	        });
+	        // console.log('maxNumberOfRoutes: ', maxNumberOfRoutes);
+	        // console.log('this.state.routeIndex: ', this.state.routeIndex);
+	        if (maxNumberOfRoutes === _this8.state.routeIndex) {
+	          clearInterval(clearMe);
+	          _this8.setState({
+	            deacons: deacons,
+	            routeIndex: 0,
+	            animationIndex: 0
+	          });
+	          _this8.setCurrentPositionToSeat();
+	        }
+	      }, 50);
 	    }
 	  }, {
 	    key: 'render',
@@ -2405,8 +2448,8 @@
 	              'div',
 	              { className: 'centerSection' },
 	              _react2.default.createElement('div', { className: 'podium' }),
-	              _react2.default.createElement('div', { ref: function ref(_ref8) {
-	                  _this9.bishopChair = _ref8;
+	              _react2.default.createElement('div', { ref: function ref(_ref7) {
+	                  _this9.bishopChair = _ref7;
 	                }, className: 'chair chairOne' }),
 	              _react2.default.createElement('div', { className: 'chair chairTwo' }),
 	              _react2.default.createElement('div', { className: 'chair chairThree' })
@@ -2450,6 +2493,20 @@
 	                { id: 'addDeacon', onClick: this.saveRoute, className: 'btn btn-secondary btn-lg form-control form-control-lg', type: 'button' },
 	                'Save Route'
 	              )
+	            ),
+	            _react2.default.createElement(
+	              'div',
+	              { className: 'form-group' },
+	              _react2.default.createElement(
+	                'label',
+	                { htmlFor: 'play' },
+	                'Play'
+	              ),
+	              _react2.default.createElement(
+	                'button',
+	                { id: 'play', onClick: this.playRoute, className: 'btn btn-secondary btn-lg form-control form-control-lg', type: 'button' },
+	                'play'
+	              )
 	            )
 	          ),
 	          this.state.step !== 2 ? null : _react2.default.createElement(
@@ -2461,7 +2518,7 @@
 	              _react2.default.createElement(
 	                'label',
 	                { htmlFor: 'addDeacon' },
-	                'Select the bench he sits on.'
+	                'Drag the deacon to where he sits.'
 	              ),
 	              _react2.default.createElement(
 	                'button',
@@ -2479,58 +2536,17 @@
 	              _react2.default.createElement(
 	                'label',
 	                { htmlFor: 'sacramentToBishop' },
-	                'Passes Sacrament to the Bishop?'
+	                'Now move the deacon to record a route.'
 	              ),
 	              _react2.default.createElement(
 	                'button',
-	                { id: 'sacramentToBishop', 'data-pass-to-bishop': true, onClick: this.passToBishop, className: 'btn btn-secondary btn-lg form-control form-control-lg', type: 'button' },
-	                'Yes'
+	                { id: 'addSegment', 'data-pass-to-bishop': true, onClick: this.addRouteSegment, className: 'btn btn-secondary btn-lg form-control form-control-lg', type: 'button' },
+	                'Add Segment (record)'
 	              ),
 	              _react2.default.createElement(
 	                'button',
-	                { id: 'sacramentToBishop', 'data-pass-to-bishop': false, onClick: this.passToBishop, className: 'btn btn-secondary btn-lg form-control form-control-lg', type: 'button' },
-	                'No'
-	              )
-	            )
-	          ),
-	          this.state.step !== 4 ? null : _react2.default.createElement(
-	            'div',
-	            { className: 'step stepFour' },
-	            _react2.default.createElement(
-	              'div',
-	              { className: 'form-group' },
-	              _react2.default.createElement(
-	                'label',
-	                { htmlFor: 'addDeacon' },
-	                'Select the bench he passes sacrament to first.'
-	              ),
-	              _react2.default.createElement(
-	                'button',
-	                { id: 'addDeacon', onClick: this.selectFirstBech, className: 'btn btn-secondary btn-lg form-control form-control-lg', type: 'button' },
-	                'Next'
-	              )
-	            )
-	          ),
-	          this.state.step !== 5 ? null : _react2.default.createElement(
-	            'div',
-	            { className: 'step stepFive' },
-	            _react2.default.createElement(
-	              'div',
-	              { className: 'form-group' },
-	              _react2.default.createElement(
-	                'label',
-	                { htmlFor: 'sacramentToBishop' },
-	                'Moves up or down?'
-	              ),
-	              _react2.default.createElement(
-	                'button',
-	                { id: 'sacramentToBishop', 'data-pass-direction': 'Up', onClick: this.setPassDirection, className: 'btn btn-secondary btn-lg form-control form-control-lg', type: 'button' },
-	                'Up'
-	              ),
-	              _react2.default.createElement(
-	                'button',
-	                { id: 'sacramentToBishop', 'data-pass-direction': 'Down', onClick: this.setPassDirection, className: 'btn btn-secondary btn-lg form-control form-control-lg', type: 'button' },
-	                'Down'
+	                { id: 'finalizeRoute', 'data-pass-to-bishop': false, onClick: this.finalizeRoute, className: 'btn btn-secondary btn-lg form-control form-control-lg', type: 'button' },
+	                'Filalize Route (save)'
 	              )
 	            )
 	          )
@@ -2550,20 +2566,21 @@
 	};
 
 	Chapel.propTypes = {
-	  chapelLayout: _react.PropTypes.array
+	  chapelLayout: _react.PropTypes.array,
+	  deacons: _react.PropTypes.array
 	};
 
 	var mAddRoute = (0, _graphqlTag2.default)(_templateObject);
 
 	var AddRouteWithData = (0, _reactApollo.graphql)(mAddRoute, {
-	  props: function props(_ref9) {
-	    var mutate = _ref9.mutate;
+	  props: function props(_ref8) {
+	    var mutate = _ref8.mutate;
 	    return {
-	      submit: function submit(_ref10) {
-	        var stakeId = _ref10.stakeId;
-	        var wardId = _ref10.wardId;
-	        var chapel = _ref10.chapel;
-	        var deacons = _ref10.deacons;
+	      submit: function submit(_ref9) {
+	        var stakeId = _ref9.stakeId;
+	        var wardId = _ref9.wardId;
+	        var chapel = _ref9.chapel;
+	        var deacons = _ref9.deacons;
 	        return mutate({ variables: { stakeId: stakeId, wardId: wardId, chapel: chapel, deacons: deacons } });
 	      }
 	    };
@@ -2574,6 +2591,12 @@
 
 /***/ },
 /* 33 */
+/***/ function(module, exports) {
+
+	module.exports = require("react-draggable");
+
+/***/ },
+/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2629,7 +2652,7 @@
 	NewRoute.contextTypes = {};
 
 /***/ },
-/* 34 */
+/* 35 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2642,7 +2665,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _templateObject = _taggedTemplateLiteral(['\n  query qRoute(\n    $stakeId: String!,\n    $wardId: String!,\n    $routeId: String!,\n  ) {\n    route: getRoute(\n      stakeId: $stakeId,\n      wardId: $wardId,\n      routeId: $routeId,\n    ) {\n      _id\n      chapel\n      deacons {\n        _id\n        color\n        passToBishop\n        seat {\n          bench\n          position\n          top\n          left\n        }\n        route {\n          bench\n          direction\n          top\n          left\n        }\n        bishop {\n          top\n          left\n        }\n      } \n    }\n  }\n'], ['\n  query qRoute(\n    $stakeId: String!,\n    $wardId: String!,\n    $routeId: String!,\n  ) {\n    route: getRoute(\n      stakeId: $stakeId,\n      wardId: $wardId,\n      routeId: $routeId,\n    ) {\n      _id\n      chapel\n      deacons {\n        _id\n        color\n        passToBishop\n        seat {\n          bench\n          position\n          top\n          left\n        }\n        route {\n          bench\n          direction\n          top\n          left\n        }\n        bishop {\n          top\n          left\n        }\n      } \n    }\n  }\n']);
+	var _templateObject = _taggedTemplateLiteral(['\nquery qRoute(\n    $stakeId: String!,\n    $wardId: String!,\n    $routeId: String!,\n) {\n  route: getRoute(\n    stakeId: $stakeId,\n    wardId: $wardId,\n    routeId: $routeId,\n  ) {\n    _id\n    chapel\n    deacons {\n      _id\n      color\n      seat {\n        top\n        left\n      }\n      current {\n        top\n        left\n      }\n      route {\n        x\n        y\n      }\n    }\n  }\n}\n'], ['\nquery qRoute(\n    $stakeId: String!,\n    $wardId: String!,\n    $routeId: String!,\n) {\n  route: getRoute(\n    stakeId: $stakeId,\n    wardId: $wardId,\n    routeId: $routeId,\n  ) {\n    _id\n    chapel\n    deacons {\n      _id\n      color\n      seat {\n        top\n        left\n      }\n      current {\n        top\n        left\n      }\n      route {\n        x\n        y\n      }\n    }\n  }\n}\n']);
 
 	var _react = __webpack_require__(4);
 
@@ -2737,19 +2760,19 @@
 	exports.default = RouteData;
 
 /***/ },
-/* 35 */
+/* 36 */
 /***/ function(module, exports) {
 
 	module.exports = require("express");
 
 /***/ },
-/* 36 */
+/* 37 */
 /***/ function(module, exports) {
 
 	module.exports = require("path");
 
 /***/ },
-/* 37 */
+/* 38 */
 /***/ function(module, exports) {
 
 	module.exports = require("compression");

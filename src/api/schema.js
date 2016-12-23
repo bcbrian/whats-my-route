@@ -1,59 +1,47 @@
 const schema = `
 
 type SeatPosition {
-  bench: String
-  position: Int
+  top: Int
+  left: Int
+}
+type CurrentPosition {
   top: Int
   left: Int
 }
 type DeaconRoute {
-  bench: String
-  direction: String
-  top: Int
-  left: Int
-}
-
-type BishopPosition {
-  top: Int
-  left: Int
+  x: Int
+  y: Int
 }
 
 input SeatPositionInput {
-  bench: String
-  position: Int
-  top: Int
-  left: Int
-}
-input DeaconRouteInput {
-  bench: String
-  direction: String
   top: Int
   left: Int
 }
 
-input BishopPositionInput {
+input CurrentPositionInput {
   top: Int
   left: Int
+}
+
+input DeaconRouteInput {
+  x: Int
+  y: Int
 }
 
 type Deacon {
   _id: String!
-  route: Int
   color: String
-  passToBishop: Boolean
   seat: SeatPosition
-  route: DeaconRoute
-  bishop: BishopPosition
+  current: CurrentPosition
+  route: [[DeaconRoute]]
 }
 
 input DeaconInput {
   _id: String!
-  route: Int
   color: String
-  passToBishop: Boolean
   seat: SeatPositionInput
-  route: DeaconRouteInput
-  bishop: BishopPositionInput
+  current: CurrentPositionInput
+  route: [[DeaconRouteInput]]
 }
 
 type Route {
@@ -81,26 +69,26 @@ type Stake {
 # the schema allows the following query:
 type Query {
   stakes: [Stake]
-  
+
   searchStakes(
     searchString: String!
-  ): [Stake] 
-  
+  ): [Stake]
+
   getStake(
       stakeId: String!
   ): Stake
-  
+
   getWard(
       stakeId: String!
       wardId: String!
   ): Ward
-  
+
   getRoute(
       stakeId: String!
       wardId: String!
       routeId: String!
   ): Route
- 
+
 }
 
 type Mutation {
@@ -108,12 +96,12 @@ type Mutation {
     stakeName: String!
     wardName: String!
   ): Stake
-  
+
   submitWard(
     stakeId: String!
     wardName: String!
   ): Stake
-  
+
   submitRoute(
     stakeId: String!
     wardId: String!

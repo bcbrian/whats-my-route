@@ -8,7 +8,7 @@ class Route extends Component {
   constructor(props, context) {
     super(props, context);
   }
-  
+
   render() {
      return this.props.loading ? (<Loader />) : (
       <div className="container">
@@ -27,41 +27,36 @@ Route.contextTypes = {
 };
 
 const qRoute = gql`
-  query qRoute(
+query qRoute(
     $stakeId: String!,
     $wardId: String!,
     $routeId: String!,
+) {
+  route: getRoute(
+    stakeId: $stakeId,
+    wardId: $wardId,
+    routeId: $routeId,
   ) {
-    route: getRoute(
-      stakeId: $stakeId,
-      wardId: $wardId,
-      routeId: $routeId,
-    ) {
+    _id
+    chapel
+    deacons {
       _id
-      chapel
-      deacons {
-        _id
-        color
-        passToBishop
-        seat {
-          bench
-          position
-          top
-          left
-        }
-        route {
-          bench
-          direction
-          top
-          left
-        }
-        bishop {
-          top
-          left
-        }
-      } 
+      color
+      seat {
+        top
+        left
+      }
+      current {
+        top
+        left
+      }
+      route {
+        x
+        y
+      }
     }
   }
+}
 `;
 
 const RouteData = graphql(qRoute, {

@@ -93,7 +93,7 @@ const resolveFunctions = {
         //   console.log(stake);
         //   resolve(stake);
         // });
-        
+
         Stakes.findOneAndUpdate({ _id: stakeId, 'wards._id': wardId}, { $push: { 'wards.$.routes': route } }, { new: true }, function (err, stake) {
           if (err) return reject('MongoDB failed to update the stake to the database');
           console.log(stake);
@@ -128,15 +128,15 @@ const resolveFunctions = {
       return deacons ? deacons.length : 0;
     },
   },
-  Deacon:{
+  Deacon: {
     route({ route }, _, context) {
-      return route || {};
+      return route || [];
     },
     seat({ seat }, _, context) {
       return seat || {};
     },
-    bishop({ bishop }, _, context) {
-      return bishop || {};
+    current({ current }, _, context) {
+      return current || {};
     },
   },
 };

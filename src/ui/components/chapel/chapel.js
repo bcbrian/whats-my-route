@@ -3,46 +3,52 @@ import { Link } from 'react-router';
 import { graphql } from 'react-apollo';
 import gql from 'graphql-tag';
 import shortid from 'shortid';
+import Draggable from 'react-draggable';
 
 export default class Chapel extends Component {
   constructor(props, context) {
     super(props, context);
-    
-    console.log(props);
-    
+
     this.selectThisBench = this.selectThisBench.bind(this);
     this.addDeacon = this.addDeacon.bind(this);
     this.saveRoute = this.saveRoute.bind(this);
     this.incrementStep = this.incrementStep.bind(this);
+    this.finalizeRoute = this.finalizeRoute.bind(this);
+    this.addRouteSegment = this.addRouteSegment.bind(this);
     this.setDeacon = this.setDeacon.bind(this);
     this.selectSeatingBench = this.selectSeatingBench.bind(this);
-    this.passToBishop = this.passToBishop.bind(this);
-    this.selectFirstBech = this.selectFirstBech.bind(this);
-    this.setPassDirection = this.setPassDirection.bind(this);
-    this.toggleSelectSeat = this.toggleSelectSeat.bind(this);
-    this.toggleSelectRoute = this.toggleSelectRoute.bind(this);
+    this.toggleSelectingSeat = this.toggleSelectingSeat.bind(this);
+    this.toggleSettingRoute = this.toggleSettingRoute.bind(this);
+
+    this.playRoute = this.playRoute.bind(this);
+
+    // this.setDeaconSeat = this.setDeaconSeat.bind(this);
     this.state = {
-      selectedBench: '0:0:0',
-      selectSeat: false,
-      selectRoute: false,
+      selectingSeat: false,
+      settingRoute: false,
       deacons: props.deacons,
+      routeIndex: 0,
+      animationIndex: 0,
       step: 1,
       deaconId: '',
     };
   }
-  selectThisBench({target:{dataset:{selectedBench}}}){
+  setRouteIndex(routeIndex) {
+    this.setState({ routeIndex });
+  }
+  selectThisBench({ target: { dataset: { selectedBench } } }) {
     this.setState({selectedBench});
   }
-  toggleSelectSeat(){
-    this.setState({selectSeat: !this.state.selectSeat});
+  toggleSelectingSeat() {
+    this.setState({selectingSeat: !this.state.selectingSeat});
   }
-  toggleSelectRoute(){
-    this.setState({selectRoute: !this.state.selectRoute});
+  toggleSettingRoute() {
+    this.setState({settingRoute: !this.state.settingRoute});
   }
   incrementStep(){
     let step = this.state.step;
     step ++;
-    if(step > 5) step = 1;
+    if(step > 3) step = 1;
     this.setState({step});
   };
   setDeacon(deaconId){
@@ -55,7 +61,7 @@ export default class Chapel extends Component {
     right,
   }){
     return(
-      <div 
+      <div
         onClick={this.selectThisBench}
         key={position}
         ref={(ref) => {this[position] = ref;}}
@@ -71,42 +77,10 @@ export default class Chapel extends Component {
         <div data-selected-bench={`${position}`} className="benchBack"></div>
         <div data-selected-bench={`${position}`} className="benchSeat"></div>
         <div data-selected-bench={`${position}`} className="benchEnd benchEndRight"></div>
-        {
-          this.state.selectSeat ?
-            <div data-selected-bench={`${position}`} className="benchTarget"></div>
-          : 
-            this.state.selectRoute ?
-              <div>
-                <div data-selected-bench={`${position}:right`} className="benchTarget benchRight"></div>
-                <div data-selected-bench={`${position}:left`} className="benchTarget benchLeft"></div>
-              </div>
-            :
-              null
-        }
-        {
-          this.state.selectSeat ?
-            this.state.selectedBench !== `${position}` ? null :
-            <div className="benchHightlight"></div>
-          : 
-            this.state.selectRoute ?
-              <div>
-                {
-                  this.state.selectedBench !== `${position}:right` ? null :
-                  <div className="benchHightlight benchRight"></div>
-                }
-                {
-                  this.state.selectedBench !== `${position}:left` ? null :
-                  <div className="benchHightlight benchLeft"></div>
-                }
-              </div>
-            :
-              null
-        }
-        
       </div>
     );
   }
-  
+
   benchPrep({ position, top, left, width, rows }){
     let totalWidth = 300;
     if(rows === 0){
@@ -125,7 +99,7 @@ export default class Chapel extends Component {
     }
     return benches;
   }
-  
+
   renderBenches(sections){
     //default render top left bench
     let space = 100;
@@ -136,12 +110,12 @@ export default class Chapel extends Component {
       let top = 100;
       let sectionHeight = 90;
       let rows = [1, 1, 1, 1, 1, 1];
-    
+
       let loopCount = section === 0 ? 1 : section;
       width = (totalWidth - (20 * (section - 1) ) ) / loopCount;
-      
+
       for(var i = 0; i < loopCount; i++){
-        
+
         let sectionOfBenches = this.benchPrep({
           position: `${index}:${i}`,
           top: space,
@@ -149,7 +123,7 @@ export default class Chapel extends Component {
           width,
           rows: section === 0 ? 0 : 3,
         });
-        
+
         benches = [].concat(benches, sectionOfBenches);
       }
       space += section === 0 ? 30 : 90;
@@ -164,52 +138,95 @@ export default class Chapel extends Component {
       </div>
     );
   }
+  setDeaconSeat(deaconId, event) {
+    if (this.state.deaconId !== deaconId) return;
 
+    const deacons = this.state.deacons;
+    const deacon = deacons.filter(d => d._id === deaconId)[0];
+    const target = event.target;
+    const parentRect = target.parentElement.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const offsetLeft = targetRect.left - parentRect.left - 2; //minus 2 for the border
+    const offsetTop = targetRect.top - parentRect.top - 2;
+
+    const left = offsetLeft;
+    const top = offsetTop;
+    if (this.state.selectingSeat){
+      deacon.seat.left = left;
+      deacon.seat.top = top;
+    }
+
+    if (this.state.settingRoute){
+      this.recordDeconMovements(true, deaconId, event)
+    }
+    deacon.current.left = left;
+    deacon.current.top = top;
+    this.setState({ deacons });
+  }
+  setDeaconStart(deaconId,event){
+    // Do some logic to figure out what whe should do
+  }
+  recordDeconMovements(override, deaconId, event, anotherThing) {
+    if (!this.state.settingRoute) {
+      if (!override){
+        return;
+      } else {
+        console.log('HI override: ', override);
+      }
+    }
+    if (this.state.deaconId !== deaconId) return;
+    console.log('anotherThing: ', anotherThing);
+    const deacons = this.state.deacons;
+    const deacon = deacons.filter(d => d._id === deaconId)[0];
+    const target = event.target;
+    const parentRect = target.parentElement.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const offsetLeft = targetRect.left - parentRect.left - 2; //minus 2 for the border
+    const offsetTop = targetRect.top - parentRect.top - 2;
+
+    const left = offsetLeft;
+    const top = offsetTop;
+
+    deacon.seat.left = left;
+    if (deacon.route.length === 0) {
+      deacon.route.push([]);
+    }
+    deacon.route[deacon.route.length - 1].push({
+      x: left,
+      y: top,
+    });
+
+    this.setState({ deacons });
+  }
   renderDeacons(){
-    // <div className="deacon"></div>
-    // <div className="deacon route routeDown"></div>
-    // <div className="deacon route routeUp"></div>
     return this.state.deacons.reduce((allDeacons, deacon) => {
-      let deaconPositions = [];
+      const deaconPositions = [];
       //push in seat position
       //get seat bench position
-      
+
       deaconPositions.push(
         (
-          <div key={`${deacon._id}:seat`}className="deacon" style={{
-            left: `${deacon.seat.left}px`,
-            top: `${deacon.seat.top}px`,
-            backgroundColor: deacon.color,
-          }}></div>
+          <Draggable
+            key={`${deacon._id}:seat`}
+            position={{
+              x: deacon.current.left,
+              y: deacon.current.top,
+            }}
+            onStop={this.setDeaconSeat.bind(this, deacon._id)}
+            onStart={this.setDeaconStart.bind(this, deacon._id)}
+            onDrag={this.recordDeconMovements.bind(this, false, deacon._id)}
+          >
+            <div
+
+              className="deacon"
+              ref={(ref) => {this[`${deacon._id}:seat`] = ref;}}
+              style={{
+                backgroundColor: deacon.color,
+              }}
+            />
+          </Draggable>
         )
       );
-      //push in pass to bishop position
-      if(deacon.passToBishop){
-        
-        deaconPositions.push(
-          (
-            <div key={`${deacon._id}:bishop`}className="deacon" style={{
-              left: `${deacon.bishop.left }px`,
-              top: `${deacon.bishop.top }px`,
-              backgroundColor: deacon.color,
-            }}></div>
-          )
-        );
-      }
-      // push in route position
-      // "0:1:0:right"
-      if(deacon.route.bench){
-        
-        deaconPositions.push(
-          (
-            <div key={`${deacon._id}:route`}className={`deacon route ${deacon.route.direction ? 'route'+deacon.route.direction : ''}`} style={{
-              left: `${deacon.route.left}px`,
-              top: `${deacon.route.top}px`,
-              backgroundColor: deacon.color,
-            }}></div>
-          )
-        );
-      }
       return [].concat(allDeacons, deaconPositions);
     }, []);
   }
@@ -221,7 +238,7 @@ export default class Chapel extends Component {
       '#61bd33',
       '#45ffff',
       '#3f00bd',
-      
+
       '#bd0000',
       '#ffff00',
       '#00ff00',
@@ -236,36 +253,28 @@ export default class Chapel extends Component {
       '#bd3361',
     ][number];
   }
-  addDeacon(){
+  addDeacon() {
     const deacons = this.state.deacons;
     const deacon = {
-      _id:shortid.generate(),
-      color:this.getDeaconColor(deacons.length), // TODO: make list of safe colors :) 
-      passToBishop:false,
-      seat:{
-        bench: '',
+      _id: shortid.generate(),
+      color: this.getDeaconColor(deacons.length), // TODO: make list of safe colors :)
+      seat: {
         top: 0,
         left: 0,
-        position: null,
       },
-      route:{
-        bench: '',
+      current: {
         top: 0,
         left: 0,
-        direction: '',
       },
-      bishop:{
-        top: null,
-        left: null,
-      },
-    }
+      route: [],
+    };
     deacons.push(deacon);
     this.setDeacon(deacon._id);
-    this.toggleSelectSeat();
-    this.setState({deacons});
+    this.toggleSelectingSeat();
+    this.setState({ deacons });
     this.incrementStep();
   }
-  saveRoute(){
+  saveRoute() {
     const stakeId = this.props.stakeId;
     const wardId = this.props.wardId;
     const chapel = this.props.chapelLayout;
@@ -282,88 +291,94 @@ export default class Chapel extends Component {
       console.log('there was an error sending the query', error);
     });
   }
-  selectSeatingBench(){
-    this.toggleSelectSeat();
-    const deacons = this.state.deacons;
-    const deacon = deacons.filter( d => d._id === this.state.deaconId)[0];
-    deacon.seat.bench = this.state.selectedBench;
-    
-    const seatBench = this[deacon.seat.bench];
-    
-    const deaconsSittingHere = deacons.filter( d => d.seat.bench === deacon.seat.bench);
-    let currentSeatPosition = Math.max(...deaconsSittingHere.map( d => d.seat.position));
-    deacon.seat.position = (currentSeatPosition || currentSeatPosition === 0) ? currentSeatPosition + 1 : 0;
- 
-    let top = 0;
-    let left = 0;
-    if(seatBench){
-      top = seatBench.offsetTop;
-      left = seatBench.offsetLeft;
-    }
-    
-    deacon.seat.top = top + 2;
-    deacon.seat.left = left + 1 + (11 * (deacon.seat.position - 1));
-    
-    this.setState({deacons});
+  finalizeRoute() {
+    this.toggleSettingRoute();
+    this.setRouteIndex(0);
+    this.setCurrentPositionToSeat();
     this.incrementStep();
   }
-  passToBishop({target:{dataset:{passToBishop}}}){
+  addRouteSegment() {
+    // Do some logic so that we have incremented what one we are saving
     const deacons = this.state.deacons;
-    const deacon = deacons.filter( d => d._id === this.state.deaconId)[0];
-    deacon.passToBishop = passToBishop === 'true';
-    if(deacon.passToBishop){
-      const bishopChair = this.bishopChair;
-      let top = 0;
-      let left = 0;
-      if(bishopChair){
-        top = bishopChair.offsetTop + 20;
-        left = bishopChair.offsetLeft + bishopChair.offsetParent.offsetLeft - 15;
+    const deacon = deacons.filter(d => d._id === this.state.deaconId)[0];
+    deacon.route.push([{
+      x: deacon.current.left,
+      y: deacon.current.top,
+    }]);
+    this.setRouteIndex(this.state.routeIndex + 1);
+    this.setState({ deacons });
+
+    this.setCurrentPositions(this.state.routeIndex + 1);
+  }
+  setCurrentPositions(index) {
+    const deacons = this.state.deacons;
+    console.log(`INDEX: ${index}`);
+    deacons.forEach(deacon => {
+      if (this.state.deaconId === deacon._id && (this.state.settingRoute || this.state.selectingSeat)) return;
+      const currentRoute = deacon.route[index];
+      const lastPositionInCurrentRoute = currentRoute[currentRoute.length - 1];
+      deacon.current.left = lastPositionInCurrentRoute.x;
+      deacon.current.top = lastPositionInCurrentRoute.y;
+      console.log(`INDEX: ${index} DEACON: ${deacon._id} x:${Math.ceil(deacon.current.left)} y:${Math.ceil(deacon.current.top)}`);
+    });
+    this.setState({ deacons });
+  }
+  setCurrentPositionToSeat() {
+    const deacons = this.state.deacons;
+    deacons.forEach(deacon => {
+      deacon.current.left = deacon.seat.left;
+      deacon.current.top = deacon.seat.top;
+    });
+    this.setState({ deacons });
+  }
+  selectSeatingBench() {
+    this.toggleSelectingSeat();
+    this.toggleSettingRoute();
+    this.setCurrentPositions(0);
+    this.incrementStep();
+  }
+  playRoute() {
+    const clearMe = setInterval(() => {
+      let deacons = this.state.deacons;
+      let routeIndex = this.state.routeIndex;
+      let animationIndex = this.state.animationIndex;
+      let maxNumberOfRoutes = 0;
+      let maxNumberOfAnimations = 0;
+      // console.log('ANIMATE: ', animationIndex);
+      deacons.forEach(deacon => {
+        // console.log('deacon: ', deacon._id);
+        // console.log('deacon.route: ', deacon.route);
+        const currentRoute = deacon.route[routeIndex];
+        // console.log('currentRoute: ', currentRoute);
+        const currentAnimation = currentRoute[animationIndex] ||
+              currentRoute[currentRoute.length - 1];
+        console.log('currentAnimation: ', currentAnimation);
+        if (maxNumberOfRoutes < deacon.route.length){
+          maxNumberOfRoutes = deacon.route.length;
+        }
+        if (maxNumberOfAnimations < currentRoute.length) {
+          maxNumberOfAnimations = currentRoute.length;
+        }
+        deacon.current.left = currentAnimation.x;
+        deacon.current.top = currentAnimation.y;
+      });
+      this.setState({
+        deacons,
+        routeIndex: animationIndex === maxNumberOfAnimations ? routeIndex + 1 : routeIndex,
+        animationIndex: animationIndex + 1,
+      });
+      // console.log('maxNumberOfRoutes: ', maxNumberOfRoutes);
+      // console.log('this.state.routeIndex: ', this.state.routeIndex);
+      if ((maxNumberOfRoutes) === this.state.routeIndex) {
+        clearInterval(clearMe);
+        this.setState({
+          deacons,
+          routeIndex: 0,
+          animationIndex: 0,
+        });
+        this.setCurrentPositionToSeat();
       }
-      deacon.bishop.top = top;
-      deacon.bishop.left = left;
-    }
-    
-    this.toggleSelectRoute();
-    this.setState({deacons});
-    this.incrementStep();
-  }
-  selectFirstBech(){
-    this.toggleSelectRoute();
-    const deacons = this.state.deacons;
-    const deacon = deacons.filter( d => d._id === this.state.deaconId)[0];
-    deacon.route.bench = this.state.selectedBench
-    
-    let routeBenchId = deacon.route.bench;
-    let routeBench;
-    let top = 0;
-    let left = 0;
-    let side = 'right';
-    if(routeBenchId.includes(':right')){
-      routeBenchId = routeBenchId.replace(/:right/i, '');
-      routeBench = this[routeBenchId];
-      top = routeBench.offsetTop + 2;
-      left = routeBench.offsetLeft+routeBench.offsetWidth;
-    } else {
-      side = 'left';
-      routeBenchId = routeBenchId.replace(/:left/i, '');
-      routeBench = this[routeBenchId];
-      top = routeBench.offsetTop + 2;
-      left = routeBench.offsetLeft - 10;
-    }
-    
-    deacon.route.top = top;
-    deacon.route.left = left;
-    
-    this.setState({deacons});
-    this.incrementStep();
-  }
-  
-  setPassDirection({target:{dataset:{passDirection}}}){
-    const deacons = this.state.deacons;
-    const deacon = deacons.filter( d => d._id === this.state.deaconId)[0];
-    deacon.route.direction = passDirection;
-    this.setState({deacons});
-    this.incrementStep();
+    }, 50);
   }
   render(){
     return (
@@ -385,7 +400,7 @@ export default class Chapel extends Component {
           {this.getBenches()}
           {this.renderDeacons()}
         </div>
-        {this.props.routeId ? null : 
+        {this.props.routeId ? null :
           <div className="interact">
             { this.state.step !== 1 ? null :
               <div className="step stepOne">
@@ -401,12 +416,18 @@ export default class Chapel extends Component {
                     Save Route
                   </button>
                 </div>
+                <div className="form-group">
+                  <label htmlFor="play">Play</label>
+                  <button id="play" onClick={this.playRoute} className="btn btn-secondary btn-lg form-control form-control-lg" type="button">
+                    play
+                  </button>
+                </div>
               </div>
             }
             { this.state.step !== 2 ? null :
               <div className="step stepTwo">
                 <div className="form-group">
-                  <label htmlFor="addDeacon">Select the bench he sits on.</label>
+                  <label htmlFor="addDeacon">Drag the deacon to where he sits.</label>
                   <button id="addDeacon" onClick={this.selectSeatingBench} className="btn btn-secondary btn-lg form-control form-control-lg" type="button">
                     Next
                   </button>
@@ -416,35 +437,12 @@ export default class Chapel extends Component {
             { this.state.step !== 3 ? null :
               <div className="step stepThree">
                 <div className="form-group">
-                  <label htmlFor="sacramentToBishop">Passes Sacrament to the Bishop?</label>
-                  <button id="sacramentToBishop" data-pass-to-bishop={true} onClick={this.passToBishop} className="btn btn-secondary btn-lg form-control form-control-lg" type="button">
-                    Yes
+                  <label htmlFor="sacramentToBishop">Now move the deacon to record a route.</label>
+                  <button id="addSegment" data-pass-to-bishop={true} onClick={this.addRouteSegment} className="btn btn-secondary btn-lg form-control form-control-lg" type="button">
+                    Add Segment (record)
                   </button>
-                  <button id="sacramentToBishop" data-pass-to-bishop={false} onClick={this.passToBishop} className="btn btn-secondary btn-lg form-control form-control-lg" type="button">
-                    No
-                  </button>
-                </div>
-              </div>
-            }
-            { this.state.step !== 4 ? null :
-              <div className="step stepFour">
-                <div className="form-group">
-                  <label htmlFor="addDeacon">Select the bench he passes sacrament to first.</label>
-                  <button id="addDeacon" onClick={this.selectFirstBech} className="btn btn-secondary btn-lg form-control form-control-lg" type="button">
-                    Next
-                  </button>
-                </div>
-              </div>
-            }
-            { this.state.step !== 5 ? null :
-              <div className="step stepFive">
-                <div className="form-group">
-                  <label htmlFor="sacramentToBishop">Moves up or down?</label>
-                  <button id="sacramentToBishop" data-pass-direction={'Up'} onClick={this.setPassDirection} className="btn btn-secondary btn-lg form-control form-control-lg" type="button">
-                    Up
-                  </button>
-                  <button id="sacramentToBishop" data-pass-direction={'Down'} onClick={this.setPassDirection} className="btn btn-secondary btn-lg form-control form-control-lg" type="button">
-                    Down
+                  <button id="finalizeRoute" data-pass-to-bishop={false} onClick={this.finalizeRoute} className="btn btn-secondary btn-lg form-control form-control-lg" type="button">
+                    Filalize Route (save)
                   </button>
                 </div>
               </div>
@@ -462,6 +460,7 @@ Chapel.contextTypes = {
 
 Chapel.propTypes = {
   chapelLayout: PropTypes.array,
+  deacons: PropTypes.array,
 };
 
 
@@ -490,6 +489,3 @@ const AddRouteWithData = graphql(mAddRoute, {
 })(Chapel);
 
 export { AddRouteWithData };
-
-
-
