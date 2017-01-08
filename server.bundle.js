@@ -52,50 +52,48 @@
 
 	var _apolloServer = __webpack_require__(2);
 
-	var _server = __webpack_require__(3);
-
-	var _apolloClient = __webpack_require__(8);
+	var _apolloClient = __webpack_require__(3);
 
 	var _apolloClient2 = _interopRequireDefault(_apolloClient);
 
-	var _reactApollo = __webpack_require__(9);
+	var _reactApollo = __webpack_require__(4);
 
-	__webpack_require__(10);
+	__webpack_require__(5);
 
-	var _graphqlTools = __webpack_require__(11);
+	var _graphqlTools = __webpack_require__(6);
 
-	var _schema = __webpack_require__(12);
+	var _schema = __webpack_require__(7);
 
 	var _schema2 = _interopRequireDefault(_schema);
 
-	var _resolvers = __webpack_require__(13);
+	var _resolvers = __webpack_require__(8);
 
 	var _resolvers2 = _interopRequireDefault(_resolvers);
 
-	var _react = __webpack_require__(4);
+	var _react = __webpack_require__(12);
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _server2 = __webpack_require__(5);
+	var _server = __webpack_require__(13);
 
-	var _reactRouter = __webpack_require__(17);
+	var _reactRouter = __webpack_require__(14);
 
-	var _routes = __webpack_require__(18);
+	var _routes = __webpack_require__(15);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	// server.js
-	var express = __webpack_require__(36);
-	var path = __webpack_require__(37);
-	var compression = __webpack_require__(38);
+	var express = __webpack_require__(33);
+	var path = __webpack_require__(34);
+	var compression = __webpack_require__(35);
 	// we'll use this to render our app to an html string
 
 	// and these to match the url to routes and then render
 
 
 	function Html(_ref) {
-	  var content = _ref.content;
-	  var state = _ref.state;
+	  var content = _ref.content,
+	      state = _ref.state;
 
 	  return _react2.default.createElement(
 	    'html',
@@ -165,7 +163,7 @@
 	        _react2.default.createElement(_reactRouter.RouterContext, renderProps)
 	      );
 
-	      var appHtml = (0, _server2.renderToString)(_app);
+	      var appHtml = (0, _server.renderToString)(_app);
 	      res.send(renderPage(appHtml));
 	    } else {
 	      // no errors, no redirect, we just didn't match anything
@@ -198,159 +196,30 @@
 
 /***/ },
 /* 3 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-	var react_1 = __webpack_require__(4);
-	var ReactDOM = __webpack_require__(5);
-	var assign = __webpack_require__(6);
-	var flatten = __webpack_require__(7);
-	function getPropsFromChild(child) {
-	    var props = child.props, type = child.type;
-	    var ownProps = assign({}, props);
-	    if (type && type.defaultProps)
-	        ownProps = assign({}, type.defaultProps, props);
-	    return ownProps;
-	}
-	exports.getPropsFromChild = getPropsFromChild;
-	function getChildFromComponent(component) {
-	    if (component && component.render)
-	        return component.render();
-	    return component;
-	}
-	exports.getChildFromComponent = getChildFromComponent;
-	var contextStore = {};
-	function getQueriesFromTree(_a, fetch) {
-	    var component = _a.component, _b = _a.context, context = _b === void 0 ? {} : _b, _c = _a.queries, queries = _c === void 0 ? [] : _c;
-	    if (fetch === void 0) { fetch = true; }
-	    contextStore = assign({}, contextStore, context);
-	    if (!component)
-	        return;
-	    if (typeof component === 'function')
-	        component = { type: component };
-	    var type = component.type, props = component.props;
-	    if (typeof type === 'function') {
-	        var ComponentClass = type;
-	        var ownProps = getPropsFromChild(component);
-	        var Component_1 = new ComponentClass(ownProps, context);
-	        try {
-	            Component_1.props = ownProps;
-	            Component_1.context = context;
-	            Component_1.setState = function (newState) {
-	                Component_1.state = assign({}, Component_1.state, newState);
-	            };
-	        }
-	        catch (e) { }
-	        if (Component_1.componentWillMount)
-	            Component_1.componentWillMount();
-	        var newContext = context;
-	        if (Component_1.getChildContext)
-	            newContext = assign({}, context, Component_1.getChildContext());
-	        if (typeof type.fetchData === 'function' && fetch) {
-	            var query = type.fetchData(ownProps, newContext);
-	            if (query)
-	                queries.push({ query: query, component: component });
-	        }
-	        getQueriesFromTree({
-	            component: getChildFromComponent(Component_1),
-	            context: newContext,
-	            queries: queries,
-	        });
-	    }
-	    else if (props && props.children) {
-	        react_1.Children.forEach(props.children, function (child) { return getQueriesFromTree({
-	            component: child,
-	            context: context,
-	            queries: queries,
-	        }); });
-	    }
-	    return { queries: queries, context: contextStore };
-	}
-	function getDataFromTree(app, ctx, fetch) {
-	    if (ctx === void 0) { ctx = {}; }
-	    if (fetch === void 0) { fetch = true; }
-	    contextStore = {};
-	    var _a = getQueriesFromTree({ component: app, context: ctx }, fetch), context = _a.context, queries = _a.queries;
-	    contextStore = {};
-	    if (!queries.length)
-	        return Promise.resolve(context);
-	    var mappedQueries = flatten(queries).map(function (y) { return y.query.then(function (x) { return y; }); });
-	    return Promise.all(mappedQueries)
-	        .then(function (trees) { return Promise.all(trees.filter(function (x) { return !!x; }).map(function (x) {
-	        return getDataFromTree(x.component, context, false);
-	    })); })
-	        .then(function () { return (context); });
-	}
-	exports.getDataFromTree = getDataFromTree;
-	function renderToStringWithData(component) {
-	    return getDataFromTree(component)
-	        .then(function (_a) {
-	        var client = _a.client;
-	        var markup = ReactDOM.renderToString(component);
-	        var apolloState = client.queryManager.getApolloState();
-	        for (var queryId in apolloState.queries) {
-	            var fieldsToNotShip = ['minimizedQuery', 'minimizedQueryString'];
-	            for (var _i = 0, fieldsToNotShip_1 = fieldsToNotShip; _i < fieldsToNotShip_1.length; _i++) {
-	                var field = fieldsToNotShip_1[_i];
-	                delete apolloState.queries[queryId][field];
-	            }
-	        }
-	        return { markup: markup, initialState: client.store.getState() };
-	    });
-	}
-	exports.renderToStringWithData = renderToStringWithData;
-	//# sourceMappingURL=server.js.map
-
-/***/ },
-/* 4 */
-/***/ function(module, exports) {
-
-	module.exports = require("react");
-
-/***/ },
-/* 5 */
-/***/ function(module, exports) {
-
-	module.exports = require("react-dom/server");
-
-/***/ },
-/* 6 */
-/***/ function(module, exports) {
-
-	module.exports = require("object-assign");
-
-/***/ },
-/* 7 */
-/***/ function(module, exports) {
-
-	module.exports = require("lodash.flatten");
-
-/***/ },
-/* 8 */
 /***/ function(module, exports) {
 
 	module.exports = require("apollo-client");
 
 /***/ },
-/* 9 */
+/* 4 */
 /***/ function(module, exports) {
 
 	module.exports = require("react-apollo");
 
 /***/ },
-/* 10 */
+/* 5 */
 /***/ function(module, exports) {
 
 	module.exports = require("isomorphic-fetch");
 
 /***/ },
-/* 11 */
+/* 6 */
 /***/ function(module, exports) {
 
 	module.exports = require("graphql-tools");
 
 /***/ },
-/* 12 */
+/* 7 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -358,12 +227,12 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	var schema = "\n\ntype SeatPosition {\n  top: Int\n  left: Int\n}\ntype CurrentPosition {\n  top: Int\n  left: Int\n}\ntype DeaconRoute {\n  x: Int\n  y: Int\n}\n\ninput SeatPositionInput {\n  top: Int\n  left: Int\n}\n\ninput CurrentPositionInput {\n  top: Int\n  left: Int\n}\n\ninput DeaconRouteInput {\n  x: Int\n  y: Int\n}\n\ntype Deacon {\n  _id: String!\n  color: String\n  seat: SeatPosition\n  current: CurrentPosition\n  route: [[DeaconRoute]]\n}\n\ninput DeaconInput {\n  _id: String!\n  color: String\n  seat: SeatPositionInput\n  current: CurrentPositionInput\n  route: [[DeaconRouteInput]]\n}\n\ntype Route {\n  _id: String!\n  chapel: [Int]\n  deacons: [Deacon]\n  deaconCount: Int\n}\n\ntype Ward {\n  _id: String!\n  name: String\n  routes: [Route]\n  routeCount: Int\n}\n\ntype Stake {\n  _id: String!\n  name: String\n  wards: [Ward]\n  wardCount: Int\n}\n\n\n# the schema allows the following query:\ntype Query {\n  stakes: [Stake]\n\n  searchStakes(\n    searchString: String!\n  ): [Stake]\n\n  getStake(\n      stakeId: String!\n  ): Stake\n\n  getWard(\n      stakeId: String!\n      wardId: String!\n  ): Ward\n\n  getRoute(\n      stakeId: String!\n      wardId: String!\n      routeId: String!\n  ): Route\n\n}\n\ntype Mutation {\n  submitStake(\n    stakeName: String!\n    wardName: String!\n  ): Stake\n\n  submitWard(\n    stakeId: String!\n    wardName: String!\n  ): Stake\n\n  submitRoute(\n    stakeId: String!\n    wardId: String!\n    chapel: [Int]\n    deacons: [DeaconInput]\n  ): Route\n}\n\n";
+	var schema = "\n\ntype SeatPosition {\n  top: Int\n  left: Int\n}\ntype CurrentPosition {\n  top: Int\n  left: Int\n}\ntype DeaconRoute {\n  x: Int\n  y: Int\n}\n\ninput SeatPositionInput {\n  top: Int\n  left: Int\n}\n\ninput CurrentPositionInput {\n  top: Int\n  left: Int\n}\n\ninput DeaconRouteInput {\n  x: Int\n  y: Int\n}\n\ntype Deacon {\n  _id: String!\n  color: String\n  seat: SeatPosition\n  current: CurrentPosition\n  route: [[DeaconRoute]]\n}\n\ninput DeaconInput {\n  _id: String!\n  color: String\n  seat: SeatPositionInput\n  current: CurrentPositionInput\n  route: [[DeaconRouteInput]]\n}\n\ninput ChapelInput {\n  version: Int\n  benches: [Int]\n  height: Int\n}\n\ntype Chapel {\n  version: Int\n  benches: [Int]\n  height: Int\n}\n\ntype Route {\n  _id: String!\n  chapel: Chapel\n  deacons: [Deacon]\n  deaconCount: Int\n}\n\ntype Ward {\n  _id: String!\n  name: String\n  routes: [Route]\n  routeCount: Int\n}\n\ntype Stake {\n  _id: String!\n  name: String\n  wards: [Ward]\n  wardCount: Int\n}\n\n\n# the schema allows the following query:\ntype Query {\n  stakes: [Stake]\n\n  searchStakes(\n    searchString: String!\n  ): [Stake]\n\n  getStake(\n      stakeId: String!\n  ): Stake\n\n  getWard(\n      stakeId: String!\n      wardId: String!\n  ): Ward\n\n  getRoute(\n      stakeId: String!\n      wardId: String!\n      routeId: String!\n  ): Route\n\n}\n\ntype Mutation {\n  submitStake(\n    stakeName: String!\n    wardName: String!\n  ): Stake\n\n  submitWard(\n    stakeId: String!\n    wardName: String!\n  ): Stake\n\n  submitRoute(\n    stakeId: String!\n    wardId: String!\n    chapel: ChapelInput\n    deacons: [DeaconInput]\n  ): Route\n}\n\n";
 
 	exports.default = schema;
 
 /***/ },
-/* 13 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -372,9 +241,9 @@
 	  value: true
 	});
 
-	var _Stakes = __webpack_require__(14);
+	var _Stakes = __webpack_require__(9);
 
-	var TIME_OUT = 500;
+	var TIME_OUT = 1000;
 	var timeoutReject = function timeoutReject(reject, message) {
 	  setTimeout(function () {
 	    return reject('MongoDB timeout when fetching stakes (timeout is 500ms)');
@@ -418,8 +287,8 @@
 	      });
 	    },
 	    getWard: function getWard(root, _ref3, context) {
-	      var stakeId = _ref3.stakeId;
-	      var wardId = _ref3.wardId;
+	      var stakeId = _ref3.stakeId,
+	          wardId = _ref3.wardId;
 
 	      console.log('Getting the ward :', stakeId, wardId);
 	      return new Promise(function (resolve, reject) {
@@ -434,9 +303,9 @@
 	      });
 	    },
 	    getRoute: function getRoute(root, _ref4, context) {
-	      var stakeId = _ref4.stakeId;
-	      var wardId = _ref4.wardId;
-	      var routeId = _ref4.routeId;
+	      var stakeId = _ref4.stakeId,
+	          wardId = _ref4.wardId,
+	          routeId = _ref4.routeId;
 
 	      console.log('Getting the route :', stakeId, wardId, routeId);
 	      return new Promise(function (resolve, reject) {
@@ -456,8 +325,8 @@
 	  },
 	  Mutation: {
 	    submitStake: function submitStake(_, _ref5, context) {
-	      var stakeName = _ref5.stakeName;
-	      var wardName = _ref5.wardName;
+	      var stakeName = _ref5.stakeName,
+	          wardName = _ref5.wardName;
 
 	      var newStake = new _Stakes.Stakes({
 	        name: stakeName,
@@ -474,8 +343,8 @@
 	      });
 	    },
 	    submitWard: function submitWard(_, _ref6, context) {
-	      var stakeId = _ref6.stakeId;
-	      var wardName = _ref6.wardName;
+	      var stakeId = _ref6.stakeId,
+	          wardName = _ref6.wardName;
 
 	      return new Promise(function (resolve, reject) {
 	        timeoutReject(reject, 'MongoDB timeout when adding a ward (timeout is 500ms)');
@@ -486,10 +355,10 @@
 	      });
 	    },
 	    submitRoute: function submitRoute(_, _ref7, context) {
-	      var stakeId = _ref7.stakeId;
-	      var wardId = _ref7.wardId;
-	      var chapel = _ref7.chapel;
-	      var deacons = _ref7.deacons;
+	      var stakeId = _ref7.stakeId,
+	          wardId = _ref7.wardId,
+	          chapel = _ref7.chapel,
+	          deacons = _ref7.deacons;
 
 	      return new Promise(function (resolve, reject) {
 	        // timeoutReject(reject, 'MongoDB timeout when adding a ward (timeout is 500ms)');
@@ -570,7 +439,7 @@
 	exports.default = resolveFunctions;
 
 /***/ },
-/* 14 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -580,11 +449,11 @@
 	});
 	exports.Stakes = undefined;
 
-	var _mongoose = __webpack_require__(15);
+	var _mongoose = __webpack_require__(10);
 
 	var _mongoose2 = _interopRequireDefault(_mongoose);
 
-	var _shortid = __webpack_require__(16);
+	var _shortid = __webpack_require__(11);
 
 	var _shortid2 = _interopRequireDefault(_shortid);
 
@@ -609,7 +478,11 @@
 	        type: String,
 	        default: _shortid2.default.generate
 	      },
-	      chapel: [Number],
+	      chapel: {
+	        version: Number,
+	        benches: [Number],
+	        height: Number
+	      },
 	      deacons: [{
 	        _id: {
 	          type: String,
@@ -638,25 +511,37 @@
 	exports.Stakes = Stakes;
 
 /***/ },
-/* 15 */
+/* 10 */
 /***/ function(module, exports) {
 
 	module.exports = require("mongoose");
 
 /***/ },
-/* 16 */
+/* 11 */
 /***/ function(module, exports) {
 
 	module.exports = require("shortid");
 
 /***/ },
-/* 17 */
+/* 12 */
+/***/ function(module, exports) {
+
+	module.exports = require("react");
+
+/***/ },
+/* 13 */
+/***/ function(module, exports) {
+
+	module.exports = require("react-dom/server");
+
+/***/ },
+/* 14 */
 /***/ function(module, exports) {
 
 	module.exports = require("react-router");
 
 /***/ },
-/* 18 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -666,51 +551,51 @@
 	});
 	exports.routes = undefined;
 
-	var _react = __webpack_require__(4);
+	var _react = __webpack_require__(12);
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _reactDom = __webpack_require__(19);
+	var _reactDom = __webpack_require__(16);
 
-	var _reactRouter = __webpack_require__(17);
+	var _reactRouter = __webpack_require__(14);
 
-	var _apolloClient = __webpack_require__(8);
+	var _apolloClient = __webpack_require__(3);
 
 	var _apolloClient2 = _interopRequireDefault(_apolloClient);
 
-	var _reactApollo = __webpack_require__(9);
+	var _reactApollo = __webpack_require__(4);
 
-	var _reactGa = __webpack_require__(20);
+	var _reactGa = __webpack_require__(17);
 
 	var _reactGa2 = _interopRequireDefault(_reactGa);
 
-	var _layout = __webpack_require__(21);
+	var _layout = __webpack_require__(18);
 
 	var _layout2 = _interopRequireDefault(_layout);
 
-	var _home = __webpack_require__(23);
+	var _home = __webpack_require__(20);
 
 	var _home2 = _interopRequireDefault(_home);
 
-	var _general = __webpack_require__(24);
+	var _general = __webpack_require__(21);
 
-	var _stakeSearch = __webpack_require__(25);
+	var _stakeSearch = __webpack_require__(22);
 
 	var _stakeSearch2 = _interopRequireDefault(_stakeSearch);
 
-	var _stake = __webpack_require__(29);
+	var _stake = __webpack_require__(26);
 
 	var _stake2 = _interopRequireDefault(_stake);
 
-	var _ward = __webpack_require__(31);
+	var _ward = __webpack_require__(28);
 
 	var _ward2 = _interopRequireDefault(_ward);
 
-	var _newRoute = __webpack_require__(34);
+	var _newRoute = __webpack_require__(31);
 
 	var _newRoute2 = _interopRequireDefault(_newRoute);
 
-	var _route = __webpack_require__(35);
+	var _route = __webpack_require__(32);
 
 	var _route2 = _interopRequireDefault(_route);
 
@@ -751,19 +636,19 @@
 	exports.routes = routes;
 
 /***/ },
-/* 19 */
+/* 16 */
 /***/ function(module, exports) {
 
 	module.exports = require("react-dom");
 
 /***/ },
-/* 20 */
+/* 17 */
 /***/ function(module, exports) {
 
 	module.exports = require("react-ga");
 
 /***/ },
-/* 21 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -774,15 +659,15 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _react = __webpack_require__(4);
+	var _react = __webpack_require__(12);
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _reactAddonsCssTransitionGroup = __webpack_require__(22);
+	var _reactAddonsCssTransitionGroup = __webpack_require__(19);
 
 	var _reactAddonsCssTransitionGroup2 = _interopRequireDefault(_reactAddonsCssTransitionGroup);
 
-	var _reactRouter = __webpack_require__(17);
+	var _reactRouter = __webpack_require__(14);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -819,53 +704,35 @@
 	    value: function renderHeader() {
 	      return _react2.default.createElement(
 	        'nav',
-	        { className: 'navbar navbar-dark bg-wmr' },
+	        { className: 'navbar bg-faded navbar-dark bg-wmr' },
 	        _react2.default.createElement(
-	          'div',
-	          { className: 'nav navbar-nav' },
+	          _reactRouter.Link,
+	          { className: 'navbar-brand', to: '/' },
 	          _react2.default.createElement(
-	            _reactRouter.Link,
-	            { className: 'nav-item nav-link active', to: '/' },
+	            'svg',
+	            { width: '50px', height: '50px', viewBox: '0 0 962 684', version: '1.1', xmlns: 'http://www.w3.org/2000/svg', xmlnsXlink: 'http://www.w3.org/1999/xlink', xmlSpace: 'preserve', style: { fillRule: 'evenodd', clipRule: 'evenodd', strokeLinejoin: 'round', strokeMiterlimit: 1.41421 } },
 	            _react2.default.createElement(
-	              'div',
-	              { className: 'nav-item tray' },
+	              'g',
+	              { transform: 'matrix(1,0,0,1,-613.332,-1694)' },
 	              _react2.default.createElement(
-	                'svg',
-	                { width: '100%', height: '100%', viewBox: '0 0 962 684', version: '1.1', xmlns: 'http://www.w3.org/2000/svg', xmlnsXlink: 'http://www.w3.org/1999/xlink', xmlSpace: 'preserve', style: { fillRule: 'evenodd', clipRule: 'evenodd', strokeLinejoin: 'round', strokeMiterlimit: 1.41421 } },
+	                'g',
+	                { id: 'handle and tray', transform: 'matrix(0.707021,0,0,1,320.567,0)' },
+	                _react2.default.createElement('path', { d: 'M1477.75,1694C1549.09,1694 1607,1751.91 1607,1823.25L1607,2081.75C1607,2153.09 1549.09,2211 1477.75,2211L729.25,2211C657.915,2211 600,2153.09 600,2081.75L600,1823.25C600,1751.91 657.914,1694 729.25,1694L1477.75,1694ZM1399.75,1784L799.25,1784C749.439,1784 699,1824.44 699,1874.25L699,2084.75C699,2134.56 749.44,2175 799.25,2175L1399.75,2175C1449.56,2175 1500,2134.56 1500,2084.75L1500,1874.25C1500,1824.44 1449.56,1784 1399.75,1784Z', style: { fill: "rgb(171, 171, 171)" } }),
 	                _react2.default.createElement(
 	                  'g',
-	                  { transform: 'matrix(1,0,0,1,-613.332,-1694)' },
-	                  _react2.default.createElement(
-	                    'g',
-	                    { id: 'handle and tray', transform: 'matrix(0.707021,0,0,1,320.567,0)' },
-	                    _react2.default.createElement('path', { d: 'M1477.75,1694C1549.09,1694 1607,1751.91 1607,1823.25L1607,2081.75C1607,2153.09 1549.09,2211 1477.75,2211L729.25,2211C657.915,2211 600,2153.09 600,2081.75L600,1823.25C600,1751.91 657.914,1694 729.25,1694L1477.75,1694ZM1399.75,1784L799.25,1784C749.439,1784 699,1824.44 699,1874.25L699,2084.75C699,2134.56 749.44,2175 799.25,2175L1399.75,2175C1449.56,2175 1500,2134.56 1500,2084.75L1500,1874.25C1500,1824.44 1449.56,1784 1399.75,1784Z', style: { fill: "rgb(171, 171, 171)" } }),
-	                    _react2.default.createElement(
-	                      'g',
-	                      { id: 'Tray' },
-	                      _react2.default.createElement('path', { d: 'M758.75,2378C610.975,2378 608.814,2373.88 586,2284.03L1601.33,2282.03C1578.52,2371.88 1577.36,2378 1429.58,2378L758.75,2378Z', style: { fill: "rgb(244,244,244)" } }),
-	                      _react2.default.createElement('path', { d: 'M1600.33,2286.03C1483.12,2288.03 698.228,2288.21 588,2286.03L505,2199.97C706.508,2198.82 1566.63,2200.54 1683.33,2199.97L1600.33,2286.03Z', style: { fill: "rgb(225, 225, 225)" } }),
-	                      _react2.default.createElement('path', { d: 'M1683.33,2199.97L505,2199.97C458.98,2177.32 339.23,2091.55 481.75,2115L1094.08,2112L1094.08,2112L1094.17,2112L1094.25,2112L1094.25,2112L1706.58,2115C1849.1,2091.55 1729.35,2177.32 1683.33,2199.97Z', style: { fill: "rgb(204, 204 ,204)" } })
-	                    )
-	                  )
+	                  { id: 'Tray' },
+	                  _react2.default.createElement('path', { d: 'M758.75,2378C610.975,2378 608.814,2373.88 586,2284.03L1601.33,2282.03C1578.52,2371.88 1577.36,2378 1429.58,2378L758.75,2378Z', style: { fill: "rgb(244,244,244)" } }),
+	                  _react2.default.createElement('path', { d: 'M1600.33,2286.03C1483.12,2288.03 698.228,2288.21 588,2286.03L505,2199.97C706.508,2198.82 1566.63,2200.54 1683.33,2199.97L1600.33,2286.03Z', style: { fill: "rgb(225, 225, 225)" } }),
+	                  _react2.default.createElement('path', { d: 'M1683.33,2199.97L505,2199.97C458.98,2177.32 339.23,2091.55 481.75,2115L1094.08,2112L1094.08,2112L1094.17,2112L1094.25,2112L1094.25,2112L1706.58,2115C1849.1,2091.55 1729.35,2177.32 1683.33,2199.97Z', style: { fill: "rgb(204, 204 ,204)" } })
 	                )
 	              )
 	            )
-	          ),
-	          _react2.default.createElement(
-	            _reactRouter.Link,
-	            { className: 'nav-item nav-link', to: '/about' },
-	            'About'
-	          ),
-	          _react2.default.createElement(
-	            _reactRouter.Link,
-	            { className: 'nav-item nav-link', to: '/contact' },
-	            'Contact'
-	          ),
-	          _react2.default.createElement(
-	            _reactRouter.Link,
-	            { className: 'nav-item nav-link', to: '/support' },
-	            'Support'
 	          )
+	        ),
+	        _react2.default.createElement(
+	          'a',
+	          { target: '_blank', className: 'nav-link far-right', href: 'https://goo.gl/forms/J0vvH9Stld4BkwDq1' },
+	          '\xA0 Help improve the app with feed back'
 	        )
 	      );
 	    }
@@ -916,13 +783,13 @@
 	};
 
 /***/ },
-/* 22 */
+/* 19 */
 /***/ function(module, exports) {
 
 	module.exports = require("react-addons-css-transition-group");
 
 /***/ },
-/* 23 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -933,7 +800,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _react = __webpack_require__(4);
+	var _react = __webpack_require__(12);
 
 	var _react2 = _interopRequireDefault(_react);
 
@@ -988,34 +855,15 @@
 	            { className: 'container' },
 	            _react2.default.createElement(
 	              'div',
-	              { className: 'tray' },
-	              _react2.default.createElement(
-	                'svg',
-	                { width: 'auto', height: 'auto', viewBox: '0 0 962 684', version: '1.1', xmlns: 'http://www.w3.org/2000/svg', xmlnsXlink: 'http://www.w3.org/1999/xlink', xmlSpace: 'preserve', style: { fillRule: 'evenodd', clipRule: 'evenodd', strokeLinejoin: 'round', strokeMiterlimit: 1.41421 } },
-	                _react2.default.createElement(
-	                  'g',
-	                  { transform: 'matrix(1,0,0,1,-613.332,-1694)' },
-	                  _react2.default.createElement(
-	                    'g',
-	                    { id: 'handle and tray', transform: 'matrix(0.707021,0,0,1,320.567,0)' },
-	                    _react2.default.createElement('path', { d: 'M1477.75,1694C1549.09,1694 1607,1751.91 1607,1823.25L1607,2081.75C1607,2153.09 1549.09,2211 1477.75,2211L729.25,2211C657.915,2211 600,2153.09 600,2081.75L600,1823.25C600,1751.91 657.914,1694 729.25,1694L1477.75,1694ZM1399.75,1784L799.25,1784C749.439,1784 699,1824.44 699,1874.25L699,2084.75C699,2134.56 749.44,2175 799.25,2175L1399.75,2175C1449.56,2175 1500,2134.56 1500,2084.75L1500,1874.25C1500,1824.44 1449.56,1784 1399.75,1784Z', style: { fill: "rgb(171, 171, 171)" } }),
-	                    _react2.default.createElement(
-	                      'g',
-	                      { id: 'Tray' },
-	                      _react2.default.createElement('path', { d: 'M758.75,2378C610.975,2378 608.814,2373.88 586,2284.03L1601.33,2282.03C1578.52,2371.88 1577.36,2378 1429.58,2378L758.75,2378Z', style: { fill: "rgb(244,244,244)" } }),
-	                      _react2.default.createElement('path', { d: 'M1600.33,2286.03C1483.12,2288.03 698.228,2288.21 588,2286.03L505,2199.97C706.508,2198.82 1566.63,2200.54 1683.33,2199.97L1600.33,2286.03Z', style: { fill: "rgb(225, 225, 225)" } }),
-	                      _react2.default.createElement('path', { d: 'M1683.33,2199.97L505,2199.97C458.98,2177.32 339.23,2091.55 481.75,2115L1094.08,2112L1094.08,2112L1094.17,2112L1094.25,2112L1094.25,2112L1706.58,2115C1849.1,2091.55 1729.35,2177.32 1683.33,2199.97Z', style: { fill: "rgb(204, 204 ,204)" } })
-	                    )
-	                  )
-	                )
-	              )
+	              { className: 'video-container text-center' },
+	              _react2.default.createElement('iframe', { src: 'https://www.youtube.com/embed/T-235-wpQ58', frameborder: '0', allowfullscreen: true })
 	            ),
 	            _react2.default.createElement(
 	              'div',
-	              { className: 'input-group input-group-lg' },
+	              { className: 'text-center' },
 	              _react2.default.createElement(
 	                'h2',
-	                { className: 'display-5 text-xs-center' },
+	                { className: 'display-5 text-center' },
 	                ' What\'s My Route? '
 	              ),
 	              _react2.default.createElement('hr', { className: 'm-y-2' })
@@ -1058,7 +906,7 @@
 	};
 
 /***/ },
-/* 24 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -1070,7 +918,7 @@
 	exports.Contact = Contact;
 	exports.Support = Support;
 
-	var _react = __webpack_require__(4);
+	var _react = __webpack_require__(12);
 
 	var _react2 = _interopRequireDefault(_react);
 
@@ -1151,7 +999,7 @@
 	}
 
 /***/ },
-/* 25 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1164,23 +1012,27 @@
 
 	var _templateObject = _taggedTemplateLiteral(['\n  query qStakes(\n    $searchString: String!,\n  ) {\n    stakes: searchStakes(\n      searchString: $searchString,\n    ) {\n      _id\n      name\n      wardCount\n    }\n  }\n'], ['\n  query qStakes(\n    $searchString: String!,\n  ) {\n    stakes: searchStakes(\n      searchString: $searchString,\n    ) {\n      _id\n      name\n      wardCount\n    }\n  }\n']);
 
-	var _react = __webpack_require__(4);
+	var _react = __webpack_require__(12);
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _reactRouter = __webpack_require__(17);
+	var _reactRouter = __webpack_require__(14);
 
-	var _reactApollo = __webpack_require__(9);
+	var _reactApollo = __webpack_require__(4);
 
-	var _graphqlTag = __webpack_require__(26);
+	var _graphqlTag = __webpack_require__(23);
 
 	var _graphqlTag2 = _interopRequireDefault(_graphqlTag);
 
-	var _loader = __webpack_require__(27);
+	var _reactAddonsCssTransitionGroup = __webpack_require__(19);
+
+	var _reactAddonsCssTransitionGroup2 = _interopRequireDefault(_reactAddonsCssTransitionGroup);
+
+	var _loader = __webpack_require__(24);
 
 	var _loader2 = _interopRequireDefault(_loader);
 
-	var _addStake = __webpack_require__(28);
+	var _addStake = __webpack_require__(25);
 
 	var _addStake2 = _interopRequireDefault(_addStake);
 
@@ -1200,10 +1052,23 @@
 	  function StakesSearch(props, context) {
 	    _classCallCheck(this, StakesSearch);
 
-	    return _possibleConstructorReturn(this, (StakesSearch.__proto__ || Object.getPrototypeOf(StakesSearch)).call(this, props, context));
+	    var _this = _possibleConstructorReturn(this, (StakesSearch.__proto__ || Object.getPrototypeOf(StakesSearch)).call(this, props, context));
+
+	    _this.toggleAddStake = _this.toggleAddStake.bind(_this);
+
+	    _this.state = {
+	      addStake: false
+	    };
+	    return _this;
 	  }
 
 	  _createClass(StakesSearch, [{
+	    key: 'toggleAddStake',
+	    value: function toggleAddStake() {
+	      console.log('toggling state :P: ', this.state.addStake);
+	      this.setState({ addStake: !this.state.addStake });
+	    }
+	  }, {
 	    key: 'renderListOfStakes',
 	    value: function renderListOfStakes() {
 	      return _react2.default.createElement(
@@ -1211,17 +1076,17 @@
 	        { className: 'list-group' },
 	        this.props.stakes.map(function (stake) {
 	          return _react2.default.createElement(
-	            'li',
-	            { key: stake._id, className: 'list-group-item' },
+	            _reactRouter.Link,
+	            { key: stake._id, to: '/stake/' + stake._id },
 	            _react2.default.createElement(
-	              _reactRouter.Link,
-	              { to: '/stake/' + stake._id },
+	              'li',
+	              { className: 'list-group-item' },
+	              stake.name,
 	              _react2.default.createElement(
 	                'span',
-	                { className: 'tag tag-default tag-pill pull-xs-right' },
+	                { className: 'badge badge-default pull-right' },
 	                stake.wardCount
-	              ),
-	              stake.name
+	              )
 	            )
 	          );
 	        })
@@ -1235,19 +1100,22 @@
 	        null,
 	        _react2.default.createElement(
 	          'div',
-	          { className: 'jumbotron jumbotron-fluid wmr-jumbotron' },
+	          { className: 'container' },
 	          _react2.default.createElement(
 	            'div',
 	            { className: 'container' },
 	            this.props.stakes.length > 0 ? _react2.default.createElement(
-	              'p',
-	              { className: 'text-xs-center' },
-	              'When searching for "',
-	              this.props.searchString,
-	              '" this is what we found.'
+	              'div',
+	              null,
+	              _react2.default.createElement(
+	                'h2',
+	                { className: 'display-5 text-left mt-2' },
+	                'Results'
+	              ),
+	              _react2.default.createElement('i', { className: 'fa fa-plus-square fa-3x far-right-no-top', onClick: this.toggleAddStake, 'aria-hidden': 'true' })
 	            ) : _react2.default.createElement(
 	              'p',
-	              { className: 'text-xs-center' },
+	              { className: 'text-center' },
 	              'We did not find a stake matching your search.',
 	              _react2.default.createElement('br', null),
 	              'Click ',
@@ -1264,7 +1132,24 @@
 	        _react2.default.createElement(
 	          'div',
 	          { className: 'container list' },
-	          this.props.stakes.length > 0 ? this.renderListOfStakes() : _react2.default.createElement(_addStake2.default, { searchString: this.props.searchString })
+	          this.props.stakes.length < 1 || this.state.addStake ? _react2.default.createElement(
+	            _reactAddonsCssTransitionGroup2.default,
+	            {
+	              component: 'div',
+	              transitionName: {
+	                enter: 'animated',
+	                enterActive: 'fadeInDown',
+	                leave: 'animated',
+	                leaveActive: 'fadeOutUp',
+	                appear: 'animated',
+	                appearActive: 'fadeInDown'
+	              },
+	              transitionEnterTimeout: 1000,
+	              transitionLeaveTimeout: 1000
+	            },
+	            _react2.default.createElement(_addStake2.default, { searchString: this.props.searchString })
+	          ) : null,
+	          this.props.stakes.length > 0 ? this.renderListOfStakes() : null
 	        )
 	      );
 	    }
@@ -1295,11 +1180,11 @@
 	  // ownProps are the props that are passed into the `ProfileWithData`
 	  // when it is used by a parent component
 	  props: function props(_ref) {
-	    var ownProps = _ref.ownProps;
-	    var _ref$data = _ref.data;
-	    var loading = _ref$data.loading;
-	    var stakes = _ref$data.stakes;
-	    var refetch = _ref$data.refetch;
+	    var ownProps = _ref.ownProps,
+	        _ref$data = _ref.data,
+	        loading = _ref$data.loading,
+	        stakes = _ref$data.stakes,
+	        refetch = _ref$data.refetch;
 	    return {
 	      ownProps: ownProps,
 	      loading: loading,
@@ -1313,13 +1198,13 @@
 	exports.default = StakesSearchData;
 
 /***/ },
-/* 26 */
+/* 23 */
 /***/ function(module, exports) {
 
 	module.exports = require("graphql-tag");
 
 /***/ },
-/* 27 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -1329,7 +1214,7 @@
 	});
 	exports.default = Loader;
 
-	var _react = __webpack_require__(4);
+	var _react = __webpack_require__(12);
 
 	var _react2 = _interopRequireDefault(_react);
 
@@ -1348,7 +1233,7 @@
 	}
 
 /***/ },
-/* 28 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1361,15 +1246,15 @@
 
 	var _templateObject = _taggedTemplateLiteral(['\n  mutation mAddStake(\n    $stakeName: String!\n    $wardName: String!\n  ) {\n    submitStake(\n      stakeName: $stakeName\n      wardName: $wardName\n    ) {\n      _id\n      name\n    }\n  }\n'], ['\n  mutation mAddStake(\n    $stakeName: String!\n    $wardName: String!\n  ) {\n    submitStake(\n      stakeName: $stakeName\n      wardName: $wardName\n    ) {\n      _id\n      name\n    }\n  }\n']);
 
-	var _react = __webpack_require__(4);
+	var _react = __webpack_require__(12);
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _reactRouter = __webpack_require__(17);
+	var _reactRouter = __webpack_require__(14);
 
-	var _reactApollo = __webpack_require__(9);
+	var _reactApollo = __webpack_require__(4);
 
-	var _graphqlTag = __webpack_require__(26);
+	var _graphqlTag = __webpack_require__(23);
 
 	var _graphqlTag2 = _interopRequireDefault(_graphqlTag);
 
@@ -1477,8 +1362,8 @@
 	    var mutate = _ref4.mutate;
 	    return {
 	      submit: function submit(_ref5) {
-	        var stakeName = _ref5.stakeName;
-	        var wardName = _ref5.wardName;
+	        var stakeName = _ref5.stakeName,
+	            wardName = _ref5.wardName;
 	        return mutate({ variables: { stakeName: stakeName, wardName: wardName } });
 	      }
 	    };
@@ -1488,7 +1373,7 @@
 	exports.default = AddStakeWithData;
 
 /***/ },
-/* 29 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1501,23 +1386,23 @@
 
 	var _templateObject = _taggedTemplateLiteral(['\n  query qStake(\n    $stakeId: String!,\n  ) {\n    stake: getStake(\n      stakeId: $stakeId,\n    ) {\n      _id\n      name\n      wards{\n        _id\n        name\n        routeCount\n      }\n    }\n  }\n'], ['\n  query qStake(\n    $stakeId: String!,\n  ) {\n    stake: getStake(\n      stakeId: $stakeId,\n    ) {\n      _id\n      name\n      wards{\n        _id\n        name\n        routeCount\n      }\n    }\n  }\n']);
 
-	var _react = __webpack_require__(4);
+	var _react = __webpack_require__(12);
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _reactRouter = __webpack_require__(17);
+	var _reactRouter = __webpack_require__(14);
 
-	var _reactApollo = __webpack_require__(9);
+	var _reactApollo = __webpack_require__(4);
 
-	var _graphqlTag = __webpack_require__(26);
+	var _graphqlTag = __webpack_require__(23);
 
 	var _graphqlTag2 = _interopRequireDefault(_graphqlTag);
 
-	var _loader = __webpack_require__(27);
+	var _loader = __webpack_require__(24);
 
 	var _loader2 = _interopRequireDefault(_loader);
 
-	var _addWard = __webpack_require__(30);
+	var _addWard = __webpack_require__(27);
 
 	var _addWard2 = _interopRequireDefault(_addWard);
 
@@ -1556,12 +1441,12 @@
 	            { className: 'container' },
 	            _react2.default.createElement(
 	              'h2',
-	              { className: 'display-5 text-xs-center' },
+	              { className: 'display-5 text-center' },
 	              this.props.stake.name
 	            ),
 	            _react2.default.createElement(
 	              'p',
-	              { className: 'text-xs-center' },
+	              { className: 'text-center' },
 	              'Not what you where looking for? Click here to go back.'
 	            )
 	          )
@@ -1574,17 +1459,17 @@
 	            { className: 'list-group' },
 	            !this.props.stake.wards ? null : this.props.stake.wards.map(function (ward) {
 	              return _react2.default.createElement(
-	                'li',
-	                { key: ward._id, className: 'list-group-item' },
+	                _reactRouter.Link,
+	                { key: ward._id, to: '/stake/' + _this2.props.stakeId + '/ward/' + ward._id },
 	                _react2.default.createElement(
-	                  _reactRouter.Link,
-	                  { to: '/stake/' + _this2.props.stakeId + '/ward/' + ward._id },
+	                  'li',
+	                  { className: 'list-group-item' },
+	                  ward.name,
 	                  _react2.default.createElement(
 	                    'span',
-	                    { className: 'tag tag-default tag-pill pull-xs-right' },
+	                    { className: 'badge badge-default pull-right' },
 	                    ward.routeCount
-	                  ),
-	                  ward.name
+	                  )
 	                )
 	              );
 	            })
@@ -1621,11 +1506,11 @@
 	  // ownProps are the props that are passed into the `ProfileWithData`
 	  // when it is used by a parent component
 	  props: function props(_ref) {
-	    var ownProps = _ref.ownProps;
-	    var _ref$data = _ref.data;
-	    var loading = _ref$data.loading;
-	    var stake = _ref$data.stake;
-	    var refetch = _ref$data.refetch;
+	    var ownProps = _ref.ownProps,
+	        _ref$data = _ref.data,
+	        loading = _ref$data.loading,
+	        stake = _ref$data.stake,
+	        refetch = _ref$data.refetch;
 	    return {
 	      ownProps: ownProps,
 	      loading: loading,
@@ -1639,7 +1524,7 @@
 	exports.default = StakeData;
 
 /***/ },
-/* 30 */
+/* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1652,15 +1537,15 @@
 
 	var _templateObject = _taggedTemplateLiteral(['\n  mutation mAddWard(\n    $stakeId: String!\n    $wardName: String!\n  ) {\n    submitWard(\n      stakeId: $stakeId\n      wardName: $wardName\n    ) {\n      _id\n      name\n    }\n  }\n'], ['\n  mutation mAddWard(\n    $stakeId: String!\n    $wardName: String!\n  ) {\n    submitWard(\n      stakeId: $stakeId\n      wardName: $wardName\n    ) {\n      _id\n      name\n    }\n  }\n']);
 
-	var _react = __webpack_require__(4);
+	var _react = __webpack_require__(12);
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _reactRouter = __webpack_require__(17);
+	var _reactRouter = __webpack_require__(14);
 
-	var _reactApollo = __webpack_require__(9);
+	var _reactApollo = __webpack_require__(4);
 
-	var _graphqlTag = __webpack_require__(26);
+	var _graphqlTag = __webpack_require__(23);
 
 	var _graphqlTag2 = _interopRequireDefault(_graphqlTag);
 
@@ -1758,8 +1643,8 @@
 	    var mutate = _ref3.mutate;
 	    return {
 	      submit: function submit(_ref4) {
-	        var stakeId = _ref4.stakeId;
-	        var wardName = _ref4.wardName;
+	        var stakeId = _ref4.stakeId,
+	            wardName = _ref4.wardName;
 	        return mutate({ variables: { stakeId: stakeId, wardName: wardName } });
 	      }
 	    };
@@ -1769,7 +1654,7 @@
 	exports.default = AddWardWithData;
 
 /***/ },
-/* 31 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1780,25 +1665,25 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _templateObject = _taggedTemplateLiteral(['\n  query qStake(\n    $stakeId: String!,\n    $wardId: String!,\n  ) {\n    stake: getStake(\n      stakeId: $stakeId,\n    ) {\n      _id\n      name\n    }\n    ward: getWard(\n      stakeId: $stakeId,\n      wardId: $wardId,\n    ) {\n      _id\n      name\n      routes {\n        _id\n        chapel\n        deacons {\n          _id\n          color\n          passToBishop\n          seat {\n            bench\n            position\n            top\n            left\n          }\n          route {\n            bench\n            direction\n            top\n            left\n          }\n          bishop {\n            top\n            left\n          }\n        }\n      }\n    }\n  }\n'], ['\n  query qStake(\n    $stakeId: String!,\n    $wardId: String!,\n  ) {\n    stake: getStake(\n      stakeId: $stakeId,\n    ) {\n      _id\n      name\n    }\n    ward: getWard(\n      stakeId: $stakeId,\n      wardId: $wardId,\n    ) {\n      _id\n      name\n      routes {\n        _id\n        chapel\n        deacons {\n          _id\n          color\n          passToBishop\n          seat {\n            bench\n            position\n            top\n            left\n          }\n          route {\n            bench\n            direction\n            top\n            left\n          }\n          bishop {\n            top\n            left\n          }\n        }\n      }\n    }\n  }\n']);
+	var _templateObject = _taggedTemplateLiteral(['\n  query qStake(\n    $stakeId: String!,\n    $wardId: String!,\n  ) {\n    stake: getStake(\n      stakeId: $stakeId,\n    ) {\n      _id\n      name\n    }\n    ward: getWard(\n      stakeId: $stakeId,\n      wardId: $wardId,\n    ) {\n      _id\n      name\n      routes {\n        _id\n        chapel {\n          version\n          benches\n          height\n        }\n        deacons {\n          _id\n          color\n          seat {\n            top\n            left\n          }\n          current {\n            top\n            left\n          }\n          route {\n            x\n            y\n          }\n        }\n      }\n    }\n  }\n'], ['\n  query qStake(\n    $stakeId: String!,\n    $wardId: String!,\n  ) {\n    stake: getStake(\n      stakeId: $stakeId,\n    ) {\n      _id\n      name\n    }\n    ward: getWard(\n      stakeId: $stakeId,\n      wardId: $wardId,\n    ) {\n      _id\n      name\n      routes {\n        _id\n        chapel {\n          version\n          benches\n          height\n        }\n        deacons {\n          _id\n          color\n          seat {\n            top\n            left\n          }\n          current {\n            top\n            left\n          }\n          route {\n            x\n            y\n          }\n        }\n      }\n    }\n  }\n']);
 
-	var _react = __webpack_require__(4);
+	var _react = __webpack_require__(12);
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _reactRouter = __webpack_require__(17);
+	var _reactRouter = __webpack_require__(14);
 
-	var _reactApollo = __webpack_require__(9);
+	var _reactApollo = __webpack_require__(4);
 
-	var _graphqlTag = __webpack_require__(26);
+	var _graphqlTag = __webpack_require__(23);
 
 	var _graphqlTag2 = _interopRequireDefault(_graphqlTag);
 
-	var _loader = __webpack_require__(27);
+	var _loader = __webpack_require__(24);
 
 	var _loader2 = _interopRequireDefault(_loader);
 
-	var _chapel = __webpack_require__(32);
+	var _chapel = __webpack_require__(29);
 
 	var _chapel2 = _interopRequireDefault(_chapel);
 
@@ -1840,22 +1725,28 @@
 	        null,
 	        _react2.default.createElement(
 	          'div',
-	          { className: 'jumbotron jumbotron-fluid wmr-jumbotron' },
+	          { className: 'container' },
 	          _react2.default.createElement(
 	            'div',
-	            { className: 'container' },
+	            { className: 'container row mt-1' },
 	            _react2.default.createElement(
-	              'h2',
-	              { className: 'display-5 text-xs-center' },
-	              this.props.ward.name
+	              'div',
+	              { className: 'pull-left' },
+	              _react2.default.createElement(
+	                'h2',
+	                { className: 'display-5 text-xs-left' },
+	                this.props.ward.name
+	              ),
+	              _react2.default.createElement(
+	                'h5',
+	                { className: 'display-5 text-xs-left' },
+	                this.props.stake.name
+	              )
 	            ),
-	            _react2.default.createElement(
-	              'h5',
-	              { className: 'display-5 text-xs-center' },
-	              this.props.stake.name
-	            )
+	            _react2.default.createElement('i', { className: 'fa fa-plus-square fa-3x far-right', onClick: this.addRoute, 'aria-hidden': 'true' })
 	          )
 	        ),
+	        _react2.default.createElement('hr', null),
 	        _react2.default.createElement(
 	          'div',
 	          { className: 'container list' },
@@ -1877,21 +1768,12 @@
 	                  _react2.default.createElement(_chapel2.default, {
 	                    chapelLayout: route.chapel,
 	                    deacons: route.deacons,
-	                    routeId: route._id
+	                    routeId: route._id,
+	                    isThumbNail: true
 	                  })
 	                )
 	              );
 	            })
-	          ),
-	          _react2.default.createElement('hr', null),
-	          _react2.default.createElement(
-	            'div',
-	            { className: 'form-group' },
-	            _react2.default.createElement(
-	              'button',
-	              { onClick: this.addRoute, className: 'btn btn-secondary btn-lg form-control form-control-lg', type: 'button' },
-	              'Add a Route'
-	            )
 	          )
 	        )
 	      );
@@ -1928,12 +1810,12 @@
 	  // ownProps are the props that are passed into the `ProfileWithData`
 	  // when it is used by a parent component
 	  props: function props(_ref) {
-	    var ownProps = _ref.ownProps;
-	    var _ref$data = _ref.data;
-	    var loading = _ref$data.loading;
-	    var stake = _ref$data.stake;
-	    var ward = _ref$data.ward;
-	    var refetch = _ref$data.refetch;
+	    var ownProps = _ref.ownProps,
+	        _ref$data = _ref.data,
+	        loading = _ref$data.loading,
+	        stake = _ref$data.stake,
+	        ward = _ref$data.ward,
+	        refetch = _ref$data.refetch;
 	    return {
 	      ownProps: ownProps,
 	      loading: loading,
@@ -1949,7 +1831,7 @@
 	exports.default = WardData;
 
 /***/ },
-/* 32 */
+/* 29 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1961,31 +1843,33 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _templateObject = _taggedTemplateLiteral(['\n  mutation mAddRoute(\n    $stakeId: String!\n    $wardId: String!\n    $chapel: [Int]\n    $deacons: [DeaconInput]\n  ) {\n    submitRoute(\n      stakeId: $stakeId\n      wardId: $wardId\n      chapel: $chapel\n      deacons: $deacons\n    ) {\n      _id\n    }\n  }\n'], ['\n  mutation mAddRoute(\n    $stakeId: String!\n    $wardId: String!\n    $chapel: [Int]\n    $deacons: [DeaconInput]\n  ) {\n    submitRoute(\n      stakeId: $stakeId\n      wardId: $wardId\n      chapel: $chapel\n      deacons: $deacons\n    ) {\n      _id\n    }\n  }\n']);
+	var _templateObject = _taggedTemplateLiteral(['\nmutation mAddRoute(\n  $stakeId: String!\n  $wardId: String!\n  $chapel: ChapelInput\n  $deacons: [DeaconInput]\n) {\n  submitRoute(\n    stakeId: $stakeId\n    wardId: $wardId\n    chapel: $chapel\n    deacons: $deacons\n  ) {\n    _id\n  }\n}\n'], ['\nmutation mAddRoute(\n  $stakeId: String!\n  $wardId: String!\n  $chapel: ChapelInput\n  $deacons: [DeaconInput]\n) {\n  submitRoute(\n    stakeId: $stakeId\n    wardId: $wardId\n    chapel: $chapel\n    deacons: $deacons\n  ) {\n    _id\n  }\n}\n']);
 
-	var _react = __webpack_require__(4);
+	var _react = __webpack_require__(12);
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _reactRouter = __webpack_require__(17);
+	var _reactRouter = __webpack_require__(14);
 
-	var _reactApollo = __webpack_require__(9);
+	var _reactApollo = __webpack_require__(4);
 
-	var _graphqlTag = __webpack_require__(26);
+	var _graphqlTag = __webpack_require__(23);
 
 	var _graphqlTag2 = _interopRequireDefault(_graphqlTag);
 
-	var _shortid = __webpack_require__(16);
+	var _shortid = __webpack_require__(11);
 
 	var _shortid2 = _interopRequireDefault(_shortid);
 
-	var _reactDraggable = __webpack_require__(33);
+	var _reactDraggable = __webpack_require__(30);
 
 	var _reactDraggable2 = _interopRequireDefault(_reactDraggable);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _taggedTemplateLiteral(strings, raw) { return Object.freeze(Object.defineProperties(strings, { raw: { value: Object.freeze(raw) } })); }
+
+	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -2003,16 +1887,20 @@
 
 	    _this.selectThisBench = _this.selectThisBench.bind(_this);
 	    _this.addDeacon = _this.addDeacon.bind(_this);
+	    _this.editDeacon = _this.editDeacon.bind(_this);
 	    _this.saveRoute = _this.saveRoute.bind(_this);
 	    _this.incrementStep = _this.incrementStep.bind(_this);
 	    _this.finalizeRoute = _this.finalizeRoute.bind(_this);
 	    _this.addRouteSegment = _this.addRouteSegment.bind(_this);
+	    _this.previousSegment = _this.previousSegment.bind(_this);
 	    _this.setDeacon = _this.setDeacon.bind(_this);
 	    _this.selectSeatingBench = _this.selectSeatingBench.bind(_this);
 	    _this.toggleSelectingSeat = _this.toggleSelectingSeat.bind(_this);
 	    _this.toggleSettingRoute = _this.toggleSettingRoute.bind(_this);
 
 	    _this.playRoute = _this.playRoute.bind(_this);
+	    _this.resetCurrentSegment = _this.resetCurrentSegment.bind(_this);
+	    _this.playSegment = _this.playSegment.bind(_this);
 
 	    // this.setDeaconSeat = this.setDeaconSeat.bind(this);
 	    _this.state = {
@@ -2051,11 +1939,12 @@
 	    }
 	  }, {
 	    key: 'incrementStep',
-	    value: function incrementStep() {
+	    value: function incrementStep(nextStep) {
+	      if (nextStep) return this.setState({ step: nextStep });
 	      var step = this.state.step;
 	      step++;
 	      if (step > 3) step = 1;
-	      this.setState({ step: step });
+	      return this.setState({ step: step });
 	    }
 	  }, {
 	    key: 'setDeacon',
@@ -2067,10 +1956,10 @@
 	    value: function renderBench(_ref2) {
 	      var _this2 = this;
 
-	      var position = _ref2.position;
-	      var top = _ref2.top;
-	      var left = _ref2.left;
-	      var right = _ref2.right;
+	      var position = _ref2.position,
+	          top = _ref2.top,
+	          left = _ref2.left,
+	          right = _ref2.right;
 
 	      return _react2.default.createElement(
 	        'div',
@@ -2097,11 +1986,11 @@
 	  }, {
 	    key: 'benchPrep',
 	    value: function benchPrep(_ref4) {
-	      var position = _ref4.position;
-	      var top = _ref4.top;
-	      var left = _ref4.left;
-	      var width = _ref4.width;
-	      var rows = _ref4.rows;
+	      var position = _ref4.position,
+	          top = _ref4.top,
+	          left = _ref4.left,
+	          width = _ref4.width,
+	          rows = _ref4.rows;
 
 	      var totalWidth = 300;
 	      if (rows === 0) {
@@ -2123,15 +2012,12 @@
 	    value: function renderBenches(sections) {
 	      var _this3 = this;
 
-	      //default render top left bench
+	      // default render top left bench
 	      var space = 100;
 	      var renderedBenches = sections.reduce(function (benches, section, index) {
 	        var totalWidth = 300;
 	        var left = 0;
 	        var width = 75;
-	        var top = 100;
-	        var sectionHeight = 90;
-	        var rows = [1, 1, 1, 1, 1, 1];
 
 	        var loopCount = section === 0 ? 1 : section;
 	        width = (totalWidth - 20 * (section - 1)) / loopCount;
@@ -2143,12 +2029,12 @@
 	            top: space,
 	            left: left + (width + 20) * i,
 	            width: width,
-	            rows: section === 0 ? 0 : 3
+	            rows: section === 0 ? 0 : 1
 	          });
 
 	          benches = [].concat(benches, sectionOfBenches);
 	        }
-	        space += section === 0 ? 30 : 90;
+	        space += section === 0 ? 10 : 30;
 	        return benches;
 	      }, []);
 	      return renderedBenches;
@@ -2159,13 +2045,19 @@
 	      return _react2.default.createElement(
 	        'div',
 	        null,
-	        this.renderBenches(this.props.chapelLayout)
+	        this.renderBenches(this.props.chapelLayout.benches)
 	      );
 	    }
 	  }, {
 	    key: 'setDeaconSeat',
 	    value: function setDeaconSeat(deaconId, event) {
-	      if (this.state.deaconId !== deaconId) return;
+	      if (!this.state.settingRoute && !this.state.selectingSeat || this.state.deaconId !== deaconId) {
+	        if (!this.state.settingRoute && !this.state.selectingSeat) {
+	          // set the deacons id so we can edit this one
+	          this.setDeacon(deaconId);
+	        }
+	        return;
+	      }
 
 	      var deacons = this.state.deacons;
 	      var deacon = deacons.filter(function (d) {
@@ -2174,7 +2066,7 @@
 	      var target = event.target;
 	      var parentRect = target.parentElement.getBoundingClientRect();
 	      var targetRect = target.getBoundingClientRect();
-	      var offsetLeft = targetRect.left - parentRect.left - 2; //minus 2 for the border
+	      var offsetLeft = targetRect.left - parentRect.left - 2; // minus 2 for the border
 	      var offsetTop = targetRect.top - parentRect.top - 2;
 
 	      var left = offsetLeft;
@@ -2198,7 +2090,8 @@
 	    }
 	  }, {
 	    key: 'recordDeconMovements',
-	    value: function recordDeconMovements(override, deaconId, event, anotherThing) {
+	    value: function recordDeconMovements(override, deaconId, event, deltas) {
+	      // TODO: this could use some clean up :P
 	      if (!this.state.settingRoute) {
 	        if (!override) {
 	          return;
@@ -2207,7 +2100,7 @@
 	        }
 	      }
 	      if (this.state.deaconId !== deaconId) return;
-	      console.log('anotherThing: ', anotherThing);
+	      // console.log('deltas: ', deltas);
 	      var deacons = this.state.deacons;
 	      var deacon = deacons.filter(function (d) {
 	        return d._id === deaconId;
@@ -2225,10 +2118,21 @@
 	      if (deacon.route.length === 0) {
 	        deacon.route.push([]);
 	      }
-	      deacon.route[deacon.route.length - 1].push({
-	        x: left,
-	        y: top
-	      });
+	      var deaconRoutes = deacon.route;
+	      if (!deaconRoutes[this.state.routeIndex]) deaconRoutes[this.state.routeIndex] = [];
+	      var recordingSegment = deaconRoutes[this.state.routeIndex];
+	      var lastPosition = recordingSegment[recordingSegment.length - 1];
+	      if (!lastPosition) {
+	        recordingSegment.push({
+	          x: left,
+	          y: top
+	        });
+	      } else if (deltas) {
+	        recordingSegment.push({
+	          x: lastPosition.x + deltas.deltaX,
+	          y: lastPosition.y + deltas.deltaY
+	        });
+	      }
 
 	      this.setState({ deacons: deacons });
 	    }
@@ -2255,8 +2159,7 @@
 	            onDrag: _this4.recordDeconMovements.bind(_this4, false, deacon._id)
 	          },
 	          _react2.default.createElement('div', {
-
-	            className: 'deacon',
+	            className: 'deacon animated bounceIn ' + (deacon._id === _this4.state.deaconId ? 'deacon-helper' : ''),
 	            ref: function ref(_ref5) {
 	              _this4[deacon._id + ':seat'] = _ref5;
 	            },
@@ -2334,18 +2237,28 @@
 	      var _this6 = this;
 
 	      // Do some logic so that we have incremented what one we are saving
+	      var newIndex = this.state.routeIndex + 1;
 	      var deacons = this.state.deacons;
 	      var deacon = deacons.filter(function (d) {
 	        return d._id === _this6.state.deaconId;
 	      })[0];
-	      deacon.route.push([{
-	        x: deacon.current.left,
-	        y: deacon.current.top
-	      }]);
-	      this.setRouteIndex(this.state.routeIndex + 1);
-	      this.setState({ deacons: deacons });
-
-	      this.setCurrentPositions(this.state.routeIndex + 1);
+	      console.log('deacon.route[newIndex]: ', deacon.route[newIndex]);
+	      if (!deacon.route[newIndex]) {
+	        deacon.route[newIndex] = [{
+	          x: deacon.current.left,
+	          y: deacon.current.top
+	        }];
+	        this.setState({ deacons: deacons });
+	      }
+	      this.setRouteIndex(newIndex);
+	      this.setCurrentPositions(newIndex);
+	    }
+	  }, {
+	    key: 'previousSegment',
+	    value: function previousSegment() {
+	      var newIndex = this.state.routeIndex - 1 < 0 ? 0 : this.state.routeIndex - 1;
+	      this.setRouteIndex(newIndex);
+	      this.setCurrentPositions(newIndex);
 	    }
 	  }, {
 	    key: 'setCurrentPositions',
@@ -2355,18 +2268,51 @@
 	      var deacons = this.state.deacons;
 	      console.log('INDEX: ' + index);
 	      deacons.forEach(function (deacon) {
-	        if (_this7.state.deaconId === deacon._id && (_this7.state.settingRoute || _this7.state.selectingSeat)) return;
-	        var currentRoute = deacon.route[index];
-	        var lastPositionInCurrentRoute = currentRoute[currentRoute.length - 1];
-	        deacon.current.left = lastPositionInCurrentRoute.x;
-	        deacon.current.top = lastPositionInCurrentRoute.y;
-	        console.log('INDEX: ' + index + ' DEACON: ' + deacon._id + ' x:' + Math.ceil(deacon.current.left) + ' y:' + Math.ceil(deacon.current.top));
+	        try {
+	          if (_this7.state.deaconId === deacon._id && (_this7.state.settingRoute || _this7.state.selectingSeat)) return;
+	          var currentRoute = deacon.route[index];
+	          var lastPositionInCurrentRoute = currentRoute[currentRoute.length - 1];
+	          deacon.current.left = lastPositionInCurrentRoute.x;
+	          deacon.current.top = lastPositionInCurrentRoute.y;
+	          console.log('INDEX: ' + index + ' DEACON: ' + deacon._id + ' x:' + Math.ceil(deacon.current.left) + ' y:' + Math.ceil(deacon.current.top));
+	        } catch (error) {
+	          console.warn('Could not set current position', deacon, error);
+	        }
 	      });
+	      this.setState({ deacons: deacons });
+	    }
+	  }, {
+	    key: 'resetCurrentSegment',
+	    value: function resetCurrentSegment() {
+	      var _this8 = this;
+
+	      console.log('RESETING');
+	      var deacons = this.state.deacons;
+	      var deacon = deacons.filter(function (d) {
+	        return d._id === _this8.state.deaconId;
+	      })[0];
+
+	      var deaconRoutes = deacon.route;
+	      var currentSegment = deaconRoutes[this.state.routeIndex];
+	      var previousSegment = deaconRoutes[this.state.routeIndex - 1];
+	      if (previousSegment) {
+	        deaconRoutes[this.state.routeIndex] = [previousSegment[previousSegment.length - 1]];
+	      } else {
+	        deaconRoutes[this.state.routeIndex] = [{
+	          x: deacon.seat.left,
+	          y: deacon.seat.top
+	        }];
+	      }
+
+	      deacon.current.left = deaconRoutes[this.state.routeIndex][0].x;
+	      deacon.current.top = deaconRoutes[this.state.routeIndex][0].y;
+
 	      this.setState({ deacons: deacons });
 	    }
 	  }, {
 	    key: 'setCurrentPositionToSeat',
 	    value: function setCurrentPositionToSeat() {
+	      console.log('SETTING SEATS');
 	      var deacons = this.state.deacons;
 	      deacons.forEach(function (deacon) {
 	        deacon.current.left = deacon.seat.left;
@@ -2383,55 +2329,127 @@
 	      this.incrementStep();
 	    }
 	  }, {
+	    key: 'editDeacon',
+	    value: function editDeacon() {
+	      this.incrementStep(3);
+	      this.toggleSettingRoute();
+	    }
+	  }, {
 	    key: 'playRoute',
 	    value: function playRoute() {
-	      var _this8 = this;
+	      var _this9 = this;
 
 	      var clearMe = setInterval(function () {
-	        var deacons = _this8.state.deacons;
-	        var routeIndex = _this8.state.routeIndex;
-	        var animationIndex = _this8.state.animationIndex;
+	        var deacons = _this9.state.deacons;
+	        var routeIndex = _this9.state.routeIndex;
+	        var animationIndex = _this9.state.animationIndex;
 	        var maxNumberOfRoutes = 0;
 	        var maxNumberOfAnimations = 0;
+	        // console.log('routeIndex: ', routeIndex);
 	        // console.log('ANIMATE: ', animationIndex);
 	        deacons.forEach(function (deacon) {
-	          // console.log('deacon: ', deacon._id);
-	          // console.log('deacon.route: ', deacon.route);
-	          var currentRoute = deacon.route[routeIndex];
-	          // console.log('currentRoute: ', currentRoute);
-	          var currentAnimation = currentRoute[animationIndex] || currentRoute[currentRoute.length - 1];
-	          console.log('currentAnimation: ', currentAnimation);
-	          if (maxNumberOfRoutes < deacon.route.length) {
-	            maxNumberOfRoutes = deacon.route.length;
+	          try {
+	            // console.log('deacon: ', deacon._id);
+	            // console.log('deacon.route: ', deacon.route);
+	            var currentRoute = deacon.route[routeIndex];
+	            // console.log('currentRoute: ', currentRoute);
+	            var currentAnimation = currentRoute[animationIndex] || currentRoute[currentRoute.length - 1];
+	            // console.log('currentAnimation: ', currentAnimation);
+	            if (maxNumberOfRoutes < deacon.route.length) {
+	              maxNumberOfRoutes = deacon.route.length;
+	            }
+	            if (maxNumberOfAnimations < currentRoute.length) {
+	              maxNumberOfAnimations = currentRoute.length;
+	            }
+	            deacon.current.left = currentAnimation.x;
+	            deacon.current.top = currentAnimation.y;
+	          } catch (error) {
+	            console.warn('ANIMATION COULD NOT PLAY', deacon, error);
 	          }
-	          if (maxNumberOfAnimations < currentRoute.length) {
-	            maxNumberOfAnimations = currentRoute.length;
-	          }
-	          deacon.current.left = currentAnimation.x;
-	          deacon.current.top = currentAnimation.y;
 	        });
-	        _this8.setState({
+	        // console.log('maxNumberOfRoutes: ', maxNumberOfRoutes);
+	        // console.log('maxNumberOfAnimations: ', maxNumberOfAnimations);
+	        _this9.setState({
 	          deacons: deacons,
 	          routeIndex: animationIndex === maxNumberOfAnimations ? routeIndex + 1 : routeIndex,
-	          animationIndex: animationIndex + 1
+	          animationIndex: animationIndex === maxNumberOfAnimations ? 0 : animationIndex + 1
 	        });
 	        // console.log('maxNumberOfRoutes: ', maxNumberOfRoutes);
 	        // console.log('this.state.routeIndex: ', this.state.routeIndex);
-	        if (maxNumberOfRoutes === _this8.state.routeIndex) {
+	        if (maxNumberOfRoutes === _this9.state.routeIndex) {
 	          clearInterval(clearMe);
-	          _this8.setState({
+	          _this9.setState({
 	            deacons: deacons,
 	            routeIndex: 0,
 	            animationIndex: 0
 	          });
-	          _this8.setCurrentPositionToSeat();
+	          _this9.setCurrentPositionToSeat();
 	        }
-	      }, 50);
+	      }, 20);
+	    }
+	  }, {
+	    key: 'playSegment',
+	    value: function playSegment() {
+	      var _this10 = this;
+
+	      var clearMe = setInterval(function () {
+	        var deacons = _this10.state.deacons;
+	        var routeIndex = _this10.state.routeIndex;
+	        var animationIndex = _this10.state.animationIndex;
+	        var maxNumberOfRoutes = 0;
+	        var maxNumberOfAnimations = 0;
+	        // console.log('routeIndex: ', routeIndex);
+	        // console.log('ANIMATE: ', animationIndex);
+	        deacons.forEach(function (deacon) {
+	          try {
+	            // console.log('deacon: ', deacon._id);
+	            // console.log('deacon.route: ', deacon.route);
+	            var currentRoute = deacon.route[routeIndex];
+	            // console.log('currentRoute: ', currentRoute);
+	            var currentAnimation = currentRoute[animationIndex] || currentRoute[currentRoute.length - 1];
+	            // console.log('currentAnimation: ', currentAnimation);
+	            if (maxNumberOfRoutes < deacon.route.length) {
+	              maxNumberOfRoutes = deacon.route.length;
+	            }
+	            if (maxNumberOfAnimations < currentRoute.length) {
+	              maxNumberOfAnimations = currentRoute.length;
+	            }
+	            deacon.current.left = currentAnimation.x;
+	            deacon.current.top = currentAnimation.y;
+	          } catch (error) {
+	            console.warn('ANIMATION COULD NOT PLAY', deacon, error);
+	          }
+	        });
+	        // console.log('maxNumberOfRoutes: ', maxNumberOfRoutes);
+	        // console.log('maxNumberOfAnimations: ', maxNumberOfAnimations);
+	        _this10.setState({
+	          deacons: deacons,
+	          animationIndex: animationIndex === maxNumberOfAnimations ? 0 : animationIndex + 1
+	        });
+	        // console.log('maxNumberOfRoutes: ', maxNumberOfRoutes);
+	        // console.log('this.state.routeIndex: ', this.state.routeIndex);
+	        if (animationIndex === maxNumberOfAnimations) {
+	          clearInterval(clearMe);
+	          _this10.setState({
+	            deacons: deacons,
+	            animationIndex: 0
+	          });
+	        }
+	      }, 20);
+	    }
+	  }, {
+	    key: 'getMaxRoute',
+	    value: function getMaxRoute() {
+	      var deacons = this.state.deacons;
+	      var routeLengths = deacons.map(function (d) {
+	        return d.route && d.route.length;
+	      });
+	      return Math.max.apply(Math, _toConsumableArray(routeLengths)) || 1;
 	    }
 	  }, {
 	    key: 'render',
 	    value: function render() {
-	      var _this9 = this;
+	      var _this11 = this;
 
 	      return _react2.default.createElement(
 	        'div',
@@ -2439,7 +2457,8 @@
 	        _react2.default.createElement(
 	          'div',
 	          { className: 'chapel', style: {
-	              transform: 'scale(' + (this.props.scale || 1) + ')'
+	              transform: 'scale(' + (this.props.scale || 1) + ')',
+	              height: this.props.chapelLayout.height
 	            } },
 	          _react2.default.createElement(
 	            'div',
@@ -2449,7 +2468,7 @@
 	              { className: 'centerSection' },
 	              _react2.default.createElement('div', { className: 'podium' }),
 	              _react2.default.createElement('div', { ref: function ref(_ref7) {
-	                  _this9.bishopChair = _ref7;
+	                  _this11.bishopChair = _ref7;
 	                }, className: 'chair chairOne' }),
 	              _react2.default.createElement('div', { className: 'chair chairTwo' }),
 	              _react2.default.createElement('div', { className: 'chair chairThree' })
@@ -2460,93 +2479,219 @@
 	          this.getBenches(),
 	          this.renderDeacons()
 	        ),
-	        this.props.routeId ? null : _react2.default.createElement(
+	        this.props.isThumbNail ? null : this.props.routeId ? _react2.default.createElement(
 	          'div',
-	          { className: 'interact' },
+	          { className: 'step stepOne row' },
+	          _react2.default.createElement(
+	            'div',
+	            { className: 'col text-center' },
+	            _react2.default.createElement('i', { onClick: this.playRoute, className: 'fa fa-play fa-3x', 'aria-hidden': 'true' })
+	          )
+	        ) : _react2.default.createElement(
+	          'div',
+	          {
+	            className: 'interact container',
+	            style: {
+	              maxWidth: "300px",
+	              margin: "10 auto"
+	            }
+	          },
 	          this.state.step !== 1 ? null : _react2.default.createElement(
 	            'div',
-	            { className: 'step stepOne' },
+	            null,
 	            _react2.default.createElement(
 	              'div',
-	              { className: 'form-group' },
+	              { className: 'step stepOne row' },
 	              _react2.default.createElement(
-	                'label',
-	                { htmlFor: 'addDeacon' },
-	                'Click to add another deacon.'
+	                'div',
+	                { className: 'col-3 text-center' },
+	                _react2.default.createElement('i', { onClick: this.addDeacon, className: 'fa fa-user-plus fa-3x', 'aria-hidden': 'true' })
 	              ),
 	              _react2.default.createElement(
-	                'button',
-	                { id: 'addDeacon', onClick: this.addDeacon, className: 'btn btn-secondary btn-lg form-control form-control-lg', type: 'button' },
-	                'Add a Deacon'
+	                'div',
+	                { className: 'col-3 text-center' },
+	                _react2.default.createElement('i', { onClick: this.editDeacon, className: 'fa fa-pencil-square-o fa-3x', 'aria-hidden': 'true' })
+	              ),
+	              _react2.default.createElement(
+	                'div',
+	                { className: 'col-3 text-center' },
+	                _react2.default.createElement('i', { onClick: this.playRoute, className: 'fa fa-play fa-3x', 'aria-hidden': 'true' })
+	              ),
+	              _react2.default.createElement(
+	                'div',
+	                { className: 'col-3 text-center' },
+	                _react2.default.createElement('i', { onClick: this.saveRoute, className: 'fa fa-floppy-o fa-3x', 'aria-hidden': 'true' })
 	              )
+	            ),
+	            _react2.default.createElement('hr', null),
+	            _react2.default.createElement(
+	              'h3',
+	              null,
+	              'Instructions'
 	            ),
 	            _react2.default.createElement(
 	              'div',
-	              { className: 'form-group' },
+	              { className: 'step stepOne' },
 	              _react2.default.createElement(
-	                'label',
-	                { htmlFor: 'addDeacon' },
-	                'Click save the route.'
+	                'div',
+	                { className: 'form-group' },
+	                _react2.default.createElement('i', { className: 'fa fa-user-plus fa-1x', 'aria-hidden': 'true' }),
+	                '\xA0 Click to add another deacon.'
 	              ),
 	              _react2.default.createElement(
-	                'button',
-	                { id: 'addDeacon', onClick: this.saveRoute, className: 'btn btn-secondary btn-lg form-control form-control-lg', type: 'button' },
-	                'Save Route'
-	              )
-	            ),
-	            _react2.default.createElement(
-	              'div',
-	              { className: 'form-group' },
-	              _react2.default.createElement(
-	                'label',
-	                { htmlFor: 'play' },
-	                'Play'
+	                'div',
+	                { className: 'form-group' },
+	                _react2.default.createElement('i', { className: 'fa fa-pencil-square-o fa-1x', 'aria-hidden': 'true' }),
+	                '\xA0 Edit the current selected deacon.'
 	              ),
 	              _react2.default.createElement(
-	                'button',
-	                { id: 'play', onClick: this.playRoute, className: 'btn btn-secondary btn-lg form-control form-control-lg', type: 'button' },
-	                'play'
+	                'div',
+	                { className: 'form-group' },
+	                _react2.default.createElement('i', { className: 'fa fa-play fa-1x', 'aria-hidden': 'true' }),
+	                '\xA0 Play.'
+	              ),
+	              _react2.default.createElement(
+	                'div',
+	                { className: 'form-group' },
+	                _react2.default.createElement('i', { className: 'fa fa-floppy-o fa-1x', 'aria-hidden': 'true' }),
+	                '\xA0 Save and exit.'
 	              )
 	            )
 	          ),
 	          this.state.step !== 2 ? null : _react2.default.createElement(
 	            'div',
-	            { className: 'step stepTwo' },
+	            null,
 	            _react2.default.createElement(
 	              'div',
-	              { className: 'form-group' },
+	              { className: 'step stepTwo row' },
 	              _react2.default.createElement(
-	                'label',
-	                { htmlFor: 'addDeacon' },
-	                'Drag the deacon to where he sits.'
+	                'div',
+	                { className: 'col-10 text-center' },
+	                'Move selected deacon to seat. Then click the button.'
 	              ),
 	              _react2.default.createElement(
-	                'button',
-	                { id: 'addDeacon', onClick: this.selectSeatingBench, className: 'btn btn-secondary btn-lg form-control form-control-lg', type: 'button' },
-	                'Next'
+	                'div',
+	                { className: 'col-2 text-center' },
+	                _react2.default.createElement('i', { onClick: this.selectSeatingBench, className: 'fa fa-step-forward fa-3x', 'aria-hidden': 'true' })
+	              )
+	            ),
+	            _react2.default.createElement('hr', null),
+	            _react2.default.createElement(
+	              'h3',
+	              null,
+	              'Instructions'
+	            ),
+	            _react2.default.createElement(
+	              'div',
+	              { className: 'step stepTwo' },
+	              _react2.default.createElement(
+	                'div',
+	                { className: 'form-group' },
+	                _react2.default.createElement('i', { className: 'fa fa-step-forward fa-1x', 'aria-hidden': 'true' }),
+	                '\xA0 Clicking the next icon will take you to the route recording section. And set the deacons current spot as his seat.'
 	              )
 	            )
 	          ),
 	          this.state.step !== 3 ? null : _react2.default.createElement(
 	            'div',
-	            { className: 'step stepThree' },
+	            null,
 	            _react2.default.createElement(
 	              'div',
-	              { className: 'form-group' },
+	              { className: 'step stepThree row' },
 	              _react2.default.createElement(
-	                'label',
-	                { htmlFor: 'sacramentToBishop' },
-	                'Now move the deacon to record a route.'
+	                'div',
+	                { className: 'col-4 text-center' },
+	                _react2.default.createElement('i', { onClick: this.previousSegment, className: 'fa fa-step-backward fa-3x', 'aria-hidden': 'true' })
 	              ),
 	              _react2.default.createElement(
-	                'button',
-	                { id: 'addSegment', 'data-pass-to-bishop': true, onClick: this.addRouteSegment, className: 'btn btn-secondary btn-lg form-control form-control-lg', type: 'button' },
-	                'Add Segment (record)'
+	                'div',
+	                { className: 'col-4 text-center' },
+	                _react2.default.createElement(
+	                  'h2',
+	                  null,
+	                  this.state.routeIndex + 1,
+	                  '/',
+	                  this.getMaxRoute()
+	                )
 	              ),
 	              _react2.default.createElement(
-	                'button',
-	                { id: 'finalizeRoute', 'data-pass-to-bishop': false, onClick: this.finalizeRoute, className: 'btn btn-secondary btn-lg form-control form-control-lg', type: 'button' },
-	                'Filalize Route (save)'
+	                'div',
+	                { className: 'col-4 text-center' },
+	                _react2.default.createElement('i', { onClick: this.addRouteSegment, className: 'fa fa-step-forward fa-3x', 'aria-hidden': 'true' })
+	              )
+	            ),
+	            _react2.default.createElement(
+	              'div',
+	              { className: 'step stepThree row' },
+	              _react2.default.createElement(
+	                'div',
+	                { className: 'col-4 text-center' },
+	                _react2.default.createElement('i', { onClick: this.resetCurrentSegment, className: 'fa fa-trash fa-3x', 'aria-hidden': 'true' })
+	              ),
+	              _react2.default.createElement(
+	                'div',
+	                { className: 'col-4 text-center' },
+	                _react2.default.createElement('i', { onClick: this.playSegment, className: 'fa fa-play fa-3x', 'aria-hidden': 'true' })
+	              ),
+	              _react2.default.createElement(
+	                'div',
+	                { className: 'col-4 text-center' },
+	                _react2.default.createElement('i', { onClick: this.finalizeRoute, className: 'fa fa-check-circle fa-3x', 'aria-hidden': 'true' })
+	              )
+	            ),
+	            _react2.default.createElement('hr', null),
+	            _react2.default.createElement(
+	              'h3',
+	              null,
+	              'Instructions'
+	            ),
+	            _react2.default.createElement(
+	              'p',
+	              null,
+	              ' NOTE: Move the deacon to begin recording this segment. '
+	            ),
+	            _react2.default.createElement(
+	              'div',
+	              { className: 'step stepThree' },
+	              _react2.default.createElement(
+	                'div',
+	                { className: 'form-group' },
+	                _react2.default.createElement('i', { className: 'fa fa-step-backward fa-1x', 'aria-hidden': 'true' }),
+	                '\xA0 Go to the previous segment of the route.'
+	              ),
+	              _react2.default.createElement(
+	                'div',
+	                { className: 'form-group' },
+	                _react2.default.createElement(
+	                  'b',
+	                  null,
+	                  ' 5/6 '
+	                ),
+	                '\xA0 Which segment you are editing for this deacon.'
+	              ),
+	              _react2.default.createElement(
+	                'div',
+	                { className: 'form-group' },
+	                _react2.default.createElement('i', { className: 'fa fa-step-forward fa-1x', 'aria-hidden': 'true' }),
+	                '\xA0 Go to the next segment of the route.'
+	              ),
+	              _react2.default.createElement(
+	                'div',
+	                { className: 'form-group' },
+	                _react2.default.createElement('i', { className: 'fa fa-trash fa-1x', 'aria-hidden': 'true' }),
+	                '\xA0 Reset this segment for this deacon.'
+	              ),
+	              _react2.default.createElement(
+	                'div',
+	                { className: 'form-group' },
+	                _react2.default.createElement('i', { className: 'fa fa-play fa-1x', 'aria-hidden': 'true' }),
+	                '\xA0 Play a preview of this segment'
+	              ),
+	              _react2.default.createElement(
+	                'div',
+	                { className: 'form-group' },
+	                _react2.default.createElement('i', { className: 'fa fa-check-circle fa-1x', 'aria-hidden': 'true' }),
+	                '\xA0 Save this deacons segments and go back to the first step to add a deacon, edit a deacon, or save the route and exit the editor.'
 	              )
 	            )
 	          )
@@ -2566,8 +2711,9 @@
 	};
 
 	Chapel.propTypes = {
-	  chapelLayout: _react.PropTypes.array,
-	  deacons: _react.PropTypes.array
+	  chapelLayout: _react.PropTypes.object,
+	  deacons: _react.PropTypes.array,
+	  isThumbNail: _react.PropTypes.bool
 	};
 
 	var mAddRoute = (0, _graphqlTag2.default)(_templateObject);
@@ -2577,10 +2723,10 @@
 	    var mutate = _ref8.mutate;
 	    return {
 	      submit: function submit(_ref9) {
-	        var stakeId = _ref9.stakeId;
-	        var wardId = _ref9.wardId;
-	        var chapel = _ref9.chapel;
-	        var deacons = _ref9.deacons;
+	        var stakeId = _ref9.stakeId,
+	            wardId = _ref9.wardId,
+	            chapel = _ref9.chapel,
+	            deacons = _ref9.deacons;
 	        return mutate({ variables: { stakeId: stakeId, wardId: wardId, chapel: chapel, deacons: deacons } });
 	      }
 	    };
@@ -2590,13 +2736,13 @@
 	exports.AddRouteWithData = AddRouteWithData;
 
 /***/ },
-/* 33 */
+/* 30 */
 /***/ function(module, exports) {
 
 	module.exports = require("react-draggable");
 
 /***/ },
-/* 34 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2609,11 +2755,11 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _react = __webpack_require__(4);
+	var _react = __webpack_require__(12);
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _chapel = __webpack_require__(32);
+	var _chapel = __webpack_require__(29);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -2629,16 +2775,101 @@
 	  function NewRoute(props, context) {
 	    _classCallCheck(this, NewRoute);
 
-	    return _possibleConstructorReturn(this, (NewRoute.__proto__ || Object.getPrototypeOf(NewRoute)).call(this, props, context));
+	    var _this = _possibleConstructorReturn(this, (NewRoute.__proto__ || Object.getPrototypeOf(NewRoute)).call(this, props, context));
+
+	    _this.addBench = _this.addBench.bind(_this);
+	    _this.removeLastBench = _this.removeLastBench.bind(_this);
+
+	    _this.state = {
+	      benches: []
+	    };
+	    return _this;
 	  }
 
 	  _createClass(NewRoute, [{
+	    key: 'addBench',
+	    value: function addBench(e) {
+	      var benches = this.state.benches;
+	      benches.push(parseInt(e.target.dataset.count, 10));
+	      this.setState({ benches: benches });
+	    }
+	  }, {
+	    key: 'calculateHeight',
+	    value: function calculateHeight() {
+	      return 100 + this.state.benches.reduce(function (a, b) {
+	        return a + (b > 0 ? 30 : 10);
+	      }, 0);
+	    }
+	  }, {
+	    key: 'removeLastBench',
+	    value: function removeLastBench() {
+	      var benches = this.state.benches;
+	      benches.pop();
+	      this.setState({ benches: benches });
+	    }
+	  }, {
 	    key: 'render',
 	    value: function render() {
 	      return _react2.default.createElement(
 	        'div',
 	        { className: 'container' },
-	        _react2.default.createElement(_chapel.AddRouteWithData, _extends({}, this.props.params, { chapelLayout: [3, 3, 0, 3], deacons: [] }))
+	        _react2.default.createElement(
+	          'div',
+	          {
+	            className: 'btn-toolbar mt-3 mr-auto ml-auto',
+	            role: 'toolbar',
+	            'aria-label': 'Toolbar with button groups',
+	            style: {
+	              width: '300px'
+	            }
+	          },
+	          _react2.default.createElement(
+	            'div',
+	            { className: 'btn-group mr-2', role: 'group', 'aria-label': 'First group' },
+	            _react2.default.createElement(
+	              'button',
+	              { onClick: this.removeLastBench, type: 'button', className: 'btn btn-secondary' },
+	              'X'
+	            )
+	          ),
+	          _react2.default.createElement(
+	            'div',
+	            { className: 'btn-group mr-2', role: 'group', 'aria-label': 'Second group' },
+	            _react2.default.createElement(
+	              'button',
+	              { onClick: this.addBench, type: 'button', className: 'btn btn-secondary', 'data-count': '0' },
+	              '0'
+	            ),
+	            _react2.default.createElement(
+	              'button',
+	              { onClick: this.addBench, type: 'button', className: 'btn btn-secondary', 'data-count': '1' },
+	              '1'
+	            ),
+	            _react2.default.createElement(
+	              'button',
+	              { onClick: this.addBench, type: 'button', className: 'btn btn-secondary', 'data-count': '2' },
+	              '2'
+	            ),
+	            _react2.default.createElement(
+	              'button',
+	              { onClick: this.addBench, type: 'button', className: 'btn btn-secondary', 'data-count': '3' },
+	              '3'
+	            ),
+	            _react2.default.createElement(
+	              'button',
+	              { onClick: this.addBench, type: 'button', className: 'btn btn-secondary', 'data-count': '4' },
+	              '4'
+	            )
+	          )
+	        ),
+	        _react2.default.createElement(_chapel.AddRouteWithData, _extends({}, this.props.params, {
+	          chapelLayout: {
+	            version: 1,
+	            benches: this.state.benches,
+	            height: this.calculateHeight()
+	          },
+	          deacons: []
+	        }))
 	      );
 	    }
 	  }]);
@@ -2652,7 +2883,7 @@
 	NewRoute.contextTypes = {};
 
 /***/ },
-/* 35 */
+/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2665,23 +2896,23 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _templateObject = _taggedTemplateLiteral(['\nquery qRoute(\n    $stakeId: String!,\n    $wardId: String!,\n    $routeId: String!,\n) {\n  route: getRoute(\n    stakeId: $stakeId,\n    wardId: $wardId,\n    routeId: $routeId,\n  ) {\n    _id\n    chapel\n    deacons {\n      _id\n      color\n      seat {\n        top\n        left\n      }\n      current {\n        top\n        left\n      }\n      route {\n        x\n        y\n      }\n    }\n  }\n}\n'], ['\nquery qRoute(\n    $stakeId: String!,\n    $wardId: String!,\n    $routeId: String!,\n) {\n  route: getRoute(\n    stakeId: $stakeId,\n    wardId: $wardId,\n    routeId: $routeId,\n  ) {\n    _id\n    chapel\n    deacons {\n      _id\n      color\n      seat {\n        top\n        left\n      }\n      current {\n        top\n        left\n      }\n      route {\n        x\n        y\n      }\n    }\n  }\n}\n']);
+	var _templateObject = _taggedTemplateLiteral(['\nquery qRoute(\n    $stakeId: String!,\n    $wardId: String!,\n    $routeId: String!,\n) {\n  route: getRoute(\n    stakeId: $stakeId,\n    wardId: $wardId,\n    routeId: $routeId,\n  ) {\n    _id\n    chapel {\n      version\n      benches\n      height\n    }\n    deacons {\n      _id\n      color\n      seat {\n        top\n        left\n      }\n      current {\n        top\n        left\n      }\n      route {\n        x\n        y\n      }\n    }\n  }\n}\n'], ['\nquery qRoute(\n    $stakeId: String!,\n    $wardId: String!,\n    $routeId: String!,\n) {\n  route: getRoute(\n    stakeId: $stakeId,\n    wardId: $wardId,\n    routeId: $routeId,\n  ) {\n    _id\n    chapel {\n      version\n      benches\n      height\n    }\n    deacons {\n      _id\n      color\n      seat {\n        top\n        left\n      }\n      current {\n        top\n        left\n      }\n      route {\n        x\n        y\n      }\n    }\n  }\n}\n']);
 
-	var _react = __webpack_require__(4);
+	var _react = __webpack_require__(12);
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _reactApollo = __webpack_require__(9);
+	var _reactApollo = __webpack_require__(4);
 
-	var _graphqlTag = __webpack_require__(26);
+	var _graphqlTag = __webpack_require__(23);
 
 	var _graphqlTag2 = _interopRequireDefault(_graphqlTag);
 
-	var _chapel = __webpack_require__(32);
+	var _chapel = __webpack_require__(29);
 
 	var _chapel2 = _interopRequireDefault(_chapel);
 
-	var _loader = __webpack_require__(27);
+	var _loader = __webpack_require__(24);
 
 	var _loader2 = _interopRequireDefault(_loader);
 
@@ -2740,11 +2971,11 @@
 	  // ownProps are the props that are passed into the `ProfileWithData`
 	  // when it is used by a parent component
 	  props: function props(_ref) {
-	    var ownProps = _ref.ownProps;
-	    var _ref$data = _ref.data;
-	    var loading = _ref$data.loading;
-	    var route = _ref$data.route;
-	    var refetch = _ref$data.refetch;
+	    var ownProps = _ref.ownProps,
+	        _ref$data = _ref.data,
+	        loading = _ref$data.loading,
+	        route = _ref$data.route,
+	        refetch = _ref$data.refetch;
 	    return {
 	      ownProps: ownProps,
 	      loading: loading,
@@ -2760,19 +2991,19 @@
 	exports.default = RouteData;
 
 /***/ },
-/* 36 */
+/* 33 */
 /***/ function(module, exports) {
 
 	module.exports = require("express");
 
 /***/ },
-/* 37 */
+/* 34 */
 /***/ function(module, exports) {
 
 	module.exports = require("path");
 
 /***/ },
-/* 38 */
+/* 35 */
 /***/ function(module, exports) {
 
 	module.exports = require("compression");

@@ -38,7 +38,11 @@ query qRoute(
     routeId: $routeId,
   ) {
     _id
-    chapel
+    chapel {
+      version
+      benches
+      height
+    }
     deacons {
       _id
       color

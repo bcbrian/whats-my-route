@@ -8,9 +8,7 @@ import {
   apolloExpress,
   graphiqlExpress,
 } from 'apollo-server';
-import {
-  getDataFromTree,
-} from 'react-apollo/server';
+
 import ApolloClient, { createNetworkInterface } from 'apollo-client';
 import { ApolloProvider } from 'react-apollo';
 

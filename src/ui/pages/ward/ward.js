@@ -11,22 +11,27 @@ class Ward extends Component {
     super(props, context);
     this.addRoute = this.addRoute.bind(this);
   }
-  
+
   addRoute(event) {
     event.preventDefault();
     this.context.router.push(`/stake/${this.props.stakeId}/ward/${this.props.wardId}/new-route`);
   }
-  
+
   render() {
     return this.props.loading ? (<Loader />) : (
       <div>
-        <div className="jumbotron jumbotron-fluid wmr-jumbotron">
-          <div className="container">
-            <h2 className="display-5 text-xs-center">{this.props.ward.name}</h2>
-            <h5 className="display-5 text-xs-center">{this.props.stake.name}</h5>
+        <div className="container">
+          <div className="container row mt-1">
+            <div className="pull-left">
+              <h2 className="display-5 text-xs-left">{this.props.ward.name}</h2>
+              <h5 className="display-5 text-xs-left">{this.props.stake.name}</h5>
+            </div>
+            <i className="fa fa-plus-square fa-3x far-right" onClick={this.addRoute} aria-hidden="true" />
           </div>
         </div>
-        
+        <hr />
+
+
         <div className="container list">
           <div className="">
             {!this.props.ward.routes ? null : this.props.ward.routes.map((route) => {
@@ -42,20 +47,16 @@ class Ward extends Component {
                       chapelLayout={route.chapel}
                       deacons={route.deacons}
                       routeId={route._id}
+                      isThumbNail
                     />
                   </Link>
                 </div>
               );
             })}
           </div>
-          <hr />
-          <div className="form-group">
-            <button onClick={this.addRoute} className="btn btn-secondary btn-lg form-control form-control-lg" type="button">
-              Add a Route
-            </button>
-          </div>
+
         </div>
-        
+
       </div>
 
     );
@@ -93,26 +94,25 @@ const qStake = gql`
       name
       routes {
         _id
-        chapel
+        chapel {
+          version
+          benches
+          height
+        }
         deacons {
           _id
           color
-          passToBishop
           seat {
-            bench
-            position
+            top
+            left
+          }
+          current {
             top
             left
           }
           route {
-            bench
-            direction
-            top
-            left
-          }
-          bishop {
-            top
-            left
+            x
+            y
           }
         }
       }
@@ -145,4 +145,3 @@ const WardData = graphql(qStake, {
 })(Ward);
 
 export default WardData;
-

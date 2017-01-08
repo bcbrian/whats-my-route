@@ -1,6 +1,6 @@
 import { Stakes } from './stakes/Stakes.js';
 
-const TIME_OUT = 500;
+const TIME_OUT = 1000;
 const timeoutReject = (reject, message) => {
   setTimeout( () => reject('MongoDB timeout when fetching stakes (timeout is 500ms)'), TIME_OUT);
 }

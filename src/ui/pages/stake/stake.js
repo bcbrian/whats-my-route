@@ -10,34 +10,34 @@ class Stake extends Component {
   constructor(props) {
     super(props);
   }
-  
+
   render() {
     return this.props.loading ? (<Loader />) : (
       <div>
         <div className="jumbotron jumbotron-fluid wmr-jumbotron">
           <div className="container">
-            <h2 className="display-5 text-xs-center">{this.props.stake.name}</h2>
-            <p className="text-xs-center">Not what you where looking for? Click here to go back.</p>
+            <h2 className="display-5 text-center">{this.props.stake.name}</h2>
+            <p className="text-center">Not what you where looking for? Click here to go back.</p>
           </div>
         </div>
-        
+
         <div className="container list">
           <ul className="list-group">
             {!this.props.stake.wards ? null : this.props.stake.wards.map((ward) => {
               return (
-                <li key={ward._id} className="list-group-item">
-                  <Link to={`/stake/${this.props.stakeId}/ward/${ward._id}`}>
-                    <span className="tag tag-default tag-pill pull-xs-right">{ ward.routeCount }</span>
+                <Link key={ward._id} to={`/stake/${this.props.stakeId}/ward/${ward._id}`}>
+                  <li className="list-group-item">
                     { ward.name }
-                  </Link>
-                </li>
-              );
+                    <span className="badge badge-default pull-right">{ ward.routeCount }</span>
+                  </li>
+                </Link>
+                );
             })}
           </ul>
           <hr />
           <AddWard refetchStake={this.props.refetch} stakeId={this.props.stake._id}/>
         </div>
-        
+
       </div>
 
     );
@@ -92,4 +92,3 @@ const StakeData = graphql(qStake, {
 })(Stake);
 
 export default StakeData;
-

@@ -20,7 +20,11 @@ const StakeSchema = Mongoose.Schema({
         type: String,
         default: shortid.generate
       },
-      chapel: [Number],
+      chapel: {
+        version: Number,
+        benches: [Number],
+        height: Number,
+      },
       deacons: [{
         _id: {
           type: String,

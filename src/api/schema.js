@@ -44,9 +44,21 @@ input DeaconInput {
   route: [[DeaconRouteInput]]
 }
 
+input ChapelInput {
+  version: Int
+  benches: [Int]
+  height: Int
+}
+
+type Chapel {
+  version: Int
+  benches: [Int]
+  height: Int
+}
+
 type Route {
   _id: String!
-  chapel: [Int]
+  chapel: Chapel
   deacons: [Deacon]
   deaconCount: Int
 }
@@ -105,7 +117,7 @@ type Mutation {
   submitRoute(
     stakeId: String!
     wardId: String!
-    chapel: [Int]
+    chapel: ChapelInput
     deacons: [DeaconInput]
   ): Route
 }
